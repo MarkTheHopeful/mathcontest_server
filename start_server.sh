@@ -2,8 +2,8 @@
 
 # You should run this inside a tmux session
 
-python3 main.py 2&> .base_server.log
+export FLASK_APP=mathcontest_server.py
+flask run 2&> .mathcontest_server.log
 
 # And then leave the session using ^-B d
-# TODO: Make the whole server start process run using just one (this) script
-
+# TODO: Make the whole app start process run using just one (this) script

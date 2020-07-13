@@ -8,3 +8,6 @@ python3 game.py
 
 Most of the things will be changed. There are no actual working version of the game server yet
 Stay tuned
+
+UPD1: I messed up with venv, so before you (or me, lol) will run it, i have to do some horrrible thing
+export FLASK_APP=run_server.py

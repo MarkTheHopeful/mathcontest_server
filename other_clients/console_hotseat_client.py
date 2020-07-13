@@ -1,60 +1,21 @@
-from utils.states import *
 import sympy as sp
-import operators as ops
 from entities.Player import Player
+from game.game import Game
+import game.operators as ops
+from utils.states import *
 
+x = sp.symbols("x")
 
-class Game:
-    players = []
-    turn_num = 0
-    state = NOT_STARTED
-    game_id = -1
-
-    def __init__(self, player_1, player_2, id):
-        self.players = [player_1, player_2]
-        self.game_id = id
-        self.state = STARTED
-
-    def current_player(self):
-        return self.players[self.turn_num % len(self.players)]
-
-    def current_opponent(self):
-        return self.players[(self.turn_num + 1) % len(self.players)]
-
-    def get_function(self, position):
-        player = self.current_player()
-        if position >= len(player.functions):
-            player = self.current_opponent()
-            position -= len(player.functions)
-        return player.functions[position]
-
-    def apply_operator(self, op_ind, fun_inds):
-        try:
-            player = self.current_player()
-            oper = player.operators[op_ind]
-            position = fun_inds[0]
-            arguments = [self.get_function(ind) for ind in fun_inds]
-            res_function = oper(*arguments)
-            if position >= len(player.functions):
-                position -= len(player.functions)
-                player = self.current_opponent()
-            player.functions[position] = res_function
-            return APPLY_SUCCESS
-        except Exception:  # TODO: This is very dumb
-            return APPLY_FAILED
+base_functions = [x + 5, sp.exp(x), sp.sin(x), x ** 2 - 7 * x + 10, sp.asin(x)]
 
 
 if __name__ == "__main__":
-    x = sp.symbols("x")
-
-    base_functions = [x + 5, sp.exp(x), sp.sin(x), x ** 2 - 7 * x + 10, sp.asin(x)]
-
     player_1 = Player(input("Enter the name of the first player:\n"), base_functions.copy(), ops.ALL)
     player_2 = Player(input("Enter the name of the second player:\n"), base_functions.copy(), ops.ALL)
 
     main_game = Game(player_1, player_2, 0)
 
-    while True:
+    while main_game.state == STARTED:
         player = main_game.current_player()
         opponent = main_game.current_opponent()
         print(f"PLayer {player.name}, it's your turn now!")

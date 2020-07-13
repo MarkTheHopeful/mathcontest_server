@@ -1,2 +1,4 @@
 sympy
 flask
+sqlite
+flask_sqlalchemy
