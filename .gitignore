@@ -151,4 +151,7 @@ crashlytics-build.properties
 fabric.properties
 
 # Server log
-.base_server.log
+.mathcontest_server.log
+
+# database
+app.db
