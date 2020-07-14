@@ -8,7 +8,3 @@ python3 game.py
 
 Most of the things will be changed. There are no actual working version of the game server yet
 Stay tuned
-
-DO:
-<br>flask db init
-<br>flask db migrate -m "users table"
