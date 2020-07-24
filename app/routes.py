@@ -31,3 +31,8 @@ def start_game(fp_token, fp_un, sp_un):
 @app.route('/debug/ver_tok/<username>/<token>')         # FIXME: debug only!!!
 def ver_tok(username, token):
     return funs.debug_verify(token, username)
+
+
+@app.route('/admin/drop_tables/<secret_code>')
+def drop_table(secret_code):
+    return funs.drop_tables(secret_code)
