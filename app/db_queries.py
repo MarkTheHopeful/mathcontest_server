@@ -1,8 +1,11 @@
 from app import db
 from app.models import User, Token
 from app.DBExceptions import *
-import sqlite3
+from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 from sqlalchemy.exc import IntegrityError
+from utils.converters import convert_array_to_string, convert_string_to_array
+from sympy import latex
+from sympy.parsing.latex import parse_latex
 
 
 def database_response(database_fun):
@@ -59,7 +62,9 @@ def insert_token_to_username(id, expires_in, username):
 
 @database_response
 def insert_user(username, pass_hash):
-    new_user = User(username=username, password_hash=pass_hash)
+    new_user = User(username=username, password_hash=pass_hash,
+                    functions=convert_array_to_string(BASE_FUNCTIONS, auto_type_caster=latex),
+                    operators=convert_array_to_string(BASE_OPERATORS))
     try:
         db.session.add(new_user)
         db.session.commit()
@@ -67,6 +72,23 @@ def insert_user(username, pass_hash):
         raise DBUserAlreadyExistsException()
 
 
+@database_response
 def clear_all_tables():
     db.drop_all()
     db.create_all()
+
+
+@database_response
+def get_functions_by_username(username):
+    u = User.query.filter_by(username=username).first()
+    if u is None:
+        raise DBUserNotFoundException
+    return convert_string_to_array(u.functions, auto_type_caster=parse_latex)
+
+
+@database_response
+def get_operators_by_username(username):
+    u = User.query.filter_by(username=username).first()
+    if u is None:
+        raise DBUserNotFoundException
+    return convert_string_to_array(u.operators, auto_type_caster=int)

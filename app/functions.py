@@ -63,8 +63,8 @@ def verify_token(token, user_id):
 
 
 def verify_token_by_username(token, username):
-    u = get_user_id_by_username(username)
-    return verify_token(token, u.id)
+    uid = get_user_id_by_username(username)
+    return verify_token(token, uid)
 
 
 @function_response

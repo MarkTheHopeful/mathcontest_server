@@ -1,8 +1,8 @@
 from game.game import Game
 from entities.Player import Player
-from other_clients.console_hotseat_client import base_functions
 from game.operators import ALL
 from utils.states import *
+from app.db_queries import get_functions_by_username, get_operators_by_username
 
 
 class GameManager:
@@ -21,8 +21,10 @@ class GameManager:
         play = Player(player_username, self.make_functions(player_username), self.make_operators(player_username))
         return play
 
-    def make_functions(self, player_username):  # TODO: Store user's functions in database!
-        return base_functions.copy()
+    def make_functions(self, player_username):
+        functions = get_functions_by_username(player_username)
+        return functions
 
-    def make_operators(self, player_username):  # TODO: Store user's operators in database!
-        return ALL.copy()
+    def make_operators(self, player_username):
+        index = get_operators_by_username(player_username)
+        return [ALL[x] for x in index]

@@ -1,5 +1,6 @@
 from sympy import symbols
 
+
 class Operator:
     def __init__(self, function, name):
         self.f = function
