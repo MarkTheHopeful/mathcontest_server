@@ -7,14 +7,15 @@
 
 
 import json
-from app import db
-from app.models import User, Token
+import datetime
 from app import gm
 from utils.encrypt import encrypt_password, check_password
 from utils.error_messages import CODE
-import uuid
 from config import Config
-import datetime
+from app.db_queries import get_tokens_by_user_id, get_user_id_by_username, get_passhash_by_username, \
+    insert_token_to_username, insert_user, clear_all_tables
+from app.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException
+from utils.server_specials import gen_token
 
 
 class Response:
@@ -39,7 +40,12 @@ def function_response(result_function):
         data = json.dumps({})
         try:
             code, data = result_function(*args, **kwargs)
+        except DBException as e:
+            code = e.code
+            data = json.dumps({"Error": str(e)})
+            print(e)
         except Exception as e:
+            data = json.dumps({"Error": str(e)})
             print(e)
         return str(Response(code, data))
 
@@ -47,14 +53,18 @@ def function_response(result_function):
 
 
 def verify_token(token, user_id):
-    poss_tokens = Token.query.filter_by(user_id=user_id).all()
+    poss_tokens = get_tokens_by_user_id(user_id)
     for poss_tok in poss_tokens:
         if poss_tok.id == token:
             tok_exp = poss_tok.expires_in
-            if tok_exp < datetime.datetime.utcnow():
-                return 1
-            return 0
+            if tok_exp > datetime.datetime.utcnow():
+                return 0
     return -1
+
+
+def verify_token_by_username(token, username):
+    u = get_user_id_by_username(username)
+    return verify_token(token, u.id)
 
 
 @function_response
@@ -66,82 +76,69 @@ def status():
 
 @function_response
 def debug_verify(token, username):
-    u = User.query.filter_by(username=username).first()
-    res = verify_token(token, u.id)
-    if res == 0:
-        code = 200
-    elif res == 1:
-        code = 400
-    else:
-        code = 401
+    try:
+        res = verify_token_by_username(token, username)
+        if res == 0:
+            code = 200
+        else:
+            code = 401
+    except DBUserNotFoundException:
+        code = 404
     return code, json.dumps({})
 
 
 @function_response
 def start_game(token_1, username_1, username_2):
-    u1 = User.query.filter_by(username=username_1).first()
-    token_verification_result = verify_token(token_1, u1.id)
-    if token_verification_result == -1:
-        code = 400
+    try:
+        token_verification_result = verify_token_by_username(token_1, username_1)
+        if token_verification_result == -1:
+            code = 400
+            data = json.dumps({})
+            return code, data
+    except DBUserNotFoundException:
+        code = 404
         data = json.dumps({})
-    elif token_verification_result == 1:
-        code = 401
-        data = json.dumps({})
-    else:
-        game_id = gm.start_game(username_1, username_2)
-        code = 200
-        data = json.dumps({"Game ID": str(game_id)})
+        return code, data
+
+    game_id = gm.start_game(username_1, username_2)
+    code = 200
+    data = json.dumps({"Game ID": str(game_id)})
     return code, data
 
 
 @function_response
 def login(username, password):
-    poss = User.query.filter_by(username=username).first()
-    if poss is None:
+    try:
+        u_hash = get_passhash_by_username(username)
+    except DBUserNotFoundException:
         code = 402
         data = json.dumps({})
-    else:
-        u = poss
-        u_hash = u.password_hash
-        if not check_password(password, u_hash):
-            code = 402
-            data = json.dumps({})
-        else:
-            tok_uuid = uuid.uuid4().hex
-            tok_exp = datetime.datetime.utcnow() + datetime.timedelta(
-                seconds=Config.TOKEN_LIFETIME_SEC)  # TODO: make separate function for it
-            tok = Token(id=tok_uuid, expires_in=tok_exp, owner=u)
-            try:
-                db.session.add(tok)
-                db.session.commit()
-                code = 200
-                data = json.dumps({'Token': tok_uuid})
-            except Exception as e:  # FIXME: Too broad!
-                print(e)
-                code = 502
-                data = json.dumps({})
+        return code, data
+
+    if not check_password(password, u_hash):
+        code = 402
+        data = json.dumps({})
+        return code, data
+
+    tok_uuid, tok_exp = gen_token()
+    insert_token_to_username(tok_uuid, tok_exp, username)
+    code = 200
+    data = json.dumps({'Token': tok_uuid})
     return code, data
 
 
 @function_response
 def register(username, password):
-    poss = User.query.filter_by(username=username).first()
-    print(poss, username)
-    if poss is not None:
+    pass_hash = encrypt_password(password)
+    try:
+        insert_user(username, pass_hash)
+    except DBUserAlreadyExistsException:
         code = 405
         data = json.dumps({})
-    else:
-        pass_hash = encrypt_password(password)
-        new_user = User(username=username, password_hash=pass_hash)
-        try:
-            db.session.add(new_user)
-            db.session.commit()
-            code = 200
-            data = json.dumps({})
-        except Exception as e:  # FIXME: too broad!
-            print(e)
-            code = 502
-            data = json.dumps({})
+        return code, data
+    finally:
+        code = 200
+        data = json.dumps({})
     return code, data
 
 
@@ -149,12 +146,5 @@ def register(username, password):
 def drop_tables(secret_code):
     if secret_code != Config.ADMIN_SECRET:
         return 403, json.dumps({})
-    try:
-        db.drop_all()
-        db.create_all()
-    except Exception as e:
-        print(e)
-        code = 599
-        data = json.dumps({})
-        return code, data
+    clear_all_tables()
     return 299, json.dumps({})

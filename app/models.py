@@ -5,6 +5,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
     password_hash = db.Column(db.String(128))
+    # user_functions = db.Column(db.ARRAY(db.String))
     tokens = db.relationship('Token', backref='owner', lazy='dynamic')
 
     def __repr__(self):
