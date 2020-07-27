@@ -17,3 +17,8 @@ class DBUserNotFoundException(DBException):
 class DBUserAlreadyExistsException(DBException):
     def __init__(self, message=""):
         super(DBUserAlreadyExistsException, self).__init__(602, message)
+
+
+class DBTokenNotFoundException(DBException):
+    def __init__(self, message=""):
+        super(DBTokenNotFoundException, self).__init__()

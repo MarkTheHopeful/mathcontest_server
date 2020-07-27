@@ -36,6 +36,22 @@ def get_user_id_by_username(username):
 
 
 @database_response
+def get_username_and_exptime_by_token(token):
+    tok = Token.query.filter_by(id=token).first()
+    if tok is None:
+        raise DBTokenNotFoundException()
+    return tok.owner.username, tok.expires_in
+
+
+@database_response
+def delete_token(token):
+    tok = Token.query.filter_by(id=token).first()
+    if tok is not None:
+        db.session.delete(tok)
+        db.session.commit()
+
+
+@database_response
 def get_user_by_username(username):
     u = User.query.filter_by(username=username).first()
     if u is None:

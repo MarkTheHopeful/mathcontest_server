@@ -15,5 +15,6 @@ CODE = {
 
     601: "No user with such username",
     602: "User with such username already exists",
+    603: "No such token",
     699: "Unknown database error"
 }

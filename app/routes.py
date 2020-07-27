@@ -23,9 +23,9 @@ def register(username, password):
     return funs.register(username, password)
 
 
-@app.route('/start_game/<fp_token>/<fp_un>/<sp_un>')    # FIXME: this function will be replaced
-def start_game(fp_token, fp_un, sp_un):
-    return funs.start_game(fp_token, fp_un, sp_un)
+@app.route('/start_game/<invitor_token>/<invited_username>')    # FIXME: this function will be replaced
+def start_game(invitor_token, invited_username):
+    return funs.start_game(invitor_token, invited_username)
 
 
 @app.route('/debug/ver_tok/<username>/<token>')         # FIXME: debug only!!!

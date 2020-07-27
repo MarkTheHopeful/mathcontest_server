@@ -13,8 +13,10 @@ from utils.encrypt import encrypt_password, check_password
 from utils.error_messages import CODE
 from config import Config
 from app.db_queries import get_tokens_by_user_id, get_user_id_by_username, get_passhash_by_username, \
-    insert_token_to_username, insert_user, clear_all_tables, insert_functions_to_username, insert_operators_to_username
-from app.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException
+    insert_token_to_username, insert_user, clear_all_tables, insert_functions_to_username, insert_operators_to_username, \
+    get_username_and_exptime_by_token, delete_token
+from app.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException, \
+    DBTokenNotFoundException
 from utils.server_specials import gen_token
 from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 
@@ -53,19 +55,15 @@ def function_response(result_function):
     return wrapped
 
 
-def verify_token(token, user_id):
-    poss_tokens = get_tokens_by_user_id(user_id)
-    for poss_tok in poss_tokens:
-        if poss_tok.id == token:
-            tok_exp = poss_tok.expires_in
-            if tok_exp > datetime.datetime.utcnow():
-                return 0
-    return -1
-
-
-def verify_token_by_username(token, username):
-    uid = get_user_id_by_username(username)
-    return verify_token(token, uid)
+def token_auth(token):
+    try:
+        username, exp_time = get_username_and_exptime_by_token(token)
+    except DBTokenNotFoundException:
+        return -1
+    if exp_time > datetime.datetime.utcnow():
+        delete_token(token)
+        return -1
+    return username
 
 
 @function_response
@@ -77,31 +75,24 @@ def status():
 
 @function_response
 def debug_verify(token, username):
-    try:
-        res = verify_token_by_username(token, username)
-        if res == 0:
-            code = 200
-        else:
-            code = 401
-    except DBUserNotFoundException:
-        code = 404
+    p_username = token_auth(token)
+    if p_username == username:
+        code = 200
+    else:
+        code = 401
+
     return code, json.dumps({})
 
 
 @function_response
-def start_game(token_1, username_1, username_2):
-    try:
-        token_verification_result = verify_token_by_username(token_1, username_1)
-        if token_verification_result == -1:
-            code = 400
-            data = json.dumps({})
-            return code, data
-    except DBUserNotFoundException:
-        code = 404
+def start_game(token, username_other):
+    username_from = token_auth(token)
+    if username_from == -1:
+        code = 400
         data = json.dumps({})
         return code, data
 
-    game_id = gm.start_game(username_1, username_2)
+    game_id = gm.start_game(username_from, username_other)
     code = 200
     data = json.dumps({"Game ID": str(game_id)})
     return code, data
