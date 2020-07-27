@@ -1,7 +1,6 @@
 from app import db
 from app.models import User, Token
 from app.DBExceptions import *
-from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 from sqlalchemy.exc import IntegrityError
 from utils.converters import convert_array_to_string, convert_string_to_array
 from sympy import latex
@@ -63,8 +62,8 @@ def insert_token_to_username(id, expires_in, username):
 @database_response
 def insert_user(username, pass_hash):
     new_user = User(username=username, password_hash=pass_hash,
-                    functions=convert_array_to_string(BASE_FUNCTIONS, auto_type_caster=latex),
-                    operators=convert_array_to_string(BASE_OPERATORS))
+                    functions="",
+                    operators="")
     try:
         db.session.add(new_user)
         db.session.commit()
@@ -82,7 +81,8 @@ def clear_all_tables():
 def get_functions_by_username(username):
     u = User.query.filter_by(username=username).first()
     if u is None:
-        raise DBUserNotFoundException
+        raise DBUserNotFoundException()
+    print(u.functions)
     return convert_string_to_array(u.functions, auto_type_caster=parse_latex)
 
 
@@ -90,5 +90,29 @@ def get_functions_by_username(username):
 def get_operators_by_username(username):
     u = User.query.filter_by(username=username).first()
     if u is None:
-        raise DBUserNotFoundException
+        raise DBUserNotFoundException()
     return convert_string_to_array(u.operators, auto_type_caster=int)
+
+
+@database_response
+def insert_functions_to_username(username, functions):
+    u = User.query.filter_by(username=username).first()
+    if u is None:
+        raise DBUserNotFoundException()
+    old_funs = u.functions
+    new_funs = convert_array_to_string(functions, auto_type_caster=latex)
+    res = convert_array_to_string([old_funs, new_funs]).strip()
+    u.functions = res
+    db.session.commit()
+
+
+@database_response
+def insert_operators_to_username(username, operators):
+    u = User.query.filter_by(username=username).first()
+    if u is None:
+        raise DBUserNotFoundException()
+    old_ops = u.operators
+    new_ops = convert_array_to_string(operators)
+    res = convert_array_to_string([old_ops, new_ops]).strip()
+    u.operators = res
+    db.session.commit()

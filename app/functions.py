@@ -13,9 +13,10 @@ from utils.encrypt import encrypt_password, check_password
 from utils.error_messages import CODE
 from config import Config
 from app.db_queries import get_tokens_by_user_id, get_user_id_by_username, get_passhash_by_username, \
-    insert_token_to_username, insert_user, clear_all_tables
+    insert_token_to_username, insert_user, clear_all_tables, insert_functions_to_username, insert_operators_to_username
 from app.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException
 from utils.server_specials import gen_token
+from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 
 
 class Response:
@@ -132,6 +133,8 @@ def register(username, password):
     pass_hash = encrypt_password(password)
     try:
         insert_user(username, pass_hash)
+        insert_functions_to_username(username, BASE_FUNCTIONS)
+        insert_operators_to_username(username, BASE_OPERATORS)
     except DBUserAlreadyExistsException:
         code = 405
         data = json.dumps({})
