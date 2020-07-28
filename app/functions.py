@@ -60,7 +60,7 @@ def token_auth(token):
         username, exp_time = get_username_and_exptime_by_token(token)
     except DBTokenNotFoundException:
         return -1
-    if exp_time > datetime.datetime.utcnow():
+    if exp_time < datetime.datetime.utcnow():
         delete_token(token)
         return -1
     return username
@@ -99,23 +99,16 @@ def start_game(token, username_other):
 
 
 @function_response
-def login(username, password):
-    try:
-        u_hash = get_passhash_by_username(username)
-    except DBUserNotFoundException:
-        code = 402
+def get_game_state(token):
+    username = token_auth(token)
+    if username == -1:
+        code = 400
         data = json.dumps({})
         return code, data
 
-    if not check_password(password, u_hash):
-        code = 402
-        data = json.dumps({})
-        return code, data
-
-    tok_uuid, tok_exp = gen_token()
-    insert_token_to_username(tok_uuid, tok_exp, username)
+    game_data = gm.get_game_information(username)
     code = 200
-    data = json.dumps({'Token': tok_uuid})
+    data = game_data.get_json()
     return code, data
 
 
@@ -133,6 +126,27 @@ def register(username, password):
     finally:
         code = 200
         data = json.dumps({})
+    return code, data
+
+
+@function_response
+def login(username, password):
+    try:
+        u_hash = get_passhash_by_username(username)
+    except DBUserNotFoundException:
+        code = 402
+        data = json.dumps({})
+        return code, data
+
+    if not check_password(password, u_hash):
+        code = 402
+        data = json.dumps({})
+        return code, data
+
+    tok_uuid, tok_exp = gen_token()
+    insert_token_to_username(tok_uuid, tok_exp, username)
+    code = 200
+    data = json.dumps({'Token': tok_uuid})
     return code, data
 
 

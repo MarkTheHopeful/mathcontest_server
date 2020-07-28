@@ -8,6 +8,7 @@ CODE = {
     403: "Forbidden",
     404: "No such user",
     405: "Username is already in use",
+    406: "The user is already in game",
 
     500: "Unknown server error",
     502: "Internal database error",

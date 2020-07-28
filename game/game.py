@@ -1,4 +1,5 @@
 from utils.states import *
+from game.GameExceptions import GameException, GameNoSuchPlayerException
 
 
 class Game:
@@ -39,6 +40,30 @@ class Game:
             return APPLY_SUCCESS
         except Exception:  # TODO: This is very dumb
             return APPLY_FAILED
+
+    def get_functions_by_username(self, username):
+        if self.players[0].name == username:
+            return self.players[0].functions
+        elif self.players[1].name == username:
+            return self.players[1].functions
+        else:
+            raise GameNoSuchPlayerException()
+
+    def get_operators_by_username(self, username):
+        if self.players[0].name == username:
+            return self.players[0].operators
+        elif self.players[1].name == username:
+            return self.players[1].operators
+        else:
+            raise GameNoSuchPlayerException()
+
+    def get_opponent(self, username):
+        if self.players[0].name == username:
+            return self.players[1].name
+        elif self.players[1].name == username:
+            return self.players[0].name
+        else:
+            raise GameNoSuchPlayerException()
 
 
 if __name__ == "__main__":

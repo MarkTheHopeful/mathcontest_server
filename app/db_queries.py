@@ -37,9 +37,12 @@ def get_user_id_by_username(username):
 
 @database_response
 def get_username_and_exptime_by_token(token):
+    # print(token)
     tok = Token.query.filter_by(id=token).first()
+    # print(tok)
     if tok is None:
         raise DBTokenNotFoundException()
+    print(tok.owner.username, tok.expires_in)
     return tok.owner.username, tok.expires_in
 
 
