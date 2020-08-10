@@ -17,6 +17,7 @@ from app.db_queries import get_tokens_by_user_id, get_user_id_by_username, get_p
     get_username_and_exptime_by_token, delete_token
 from app.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException, \
     DBTokenNotFoundException
+from game.GameExceptions import GameException
 from utils.server_specials import gen_token
 from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 
@@ -110,6 +111,19 @@ def get_game_state(token):
     code = 200
     data = game_data.get_json()
     return code, data
+
+
+@function_response
+def make_turn(token, op_ind, fun_inds):
+    username = token_auth(token)
+    if username == -1:
+        code = 400
+        data = json.dumps({})
+        return code, data
+    try:
+        gm.make_turn(username, op_ind, fun_inds)
+    except GameException:
+        raise Exception("NOT DONE YET")
 
 
 @function_response

@@ -1,5 +1,5 @@
 sympy
 flask
-sqlite
 flask_sqlalchemy
 flask_migrate
+bcrypt

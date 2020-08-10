@@ -8,7 +8,8 @@ from game.operators import ALL
 from utils.states import *
 from app.db_queries import get_functions_by_username, get_operators_by_username
 from utils.error_messages import CODE
-from game.GameExceptions import GameException, GameUserIsAlreadyInException
+from game.GameExceptions import GameException, GameUserIsAlreadyInException, GameNoSuchPlayerException, \
+    GameIsNotStartedException, GameNotYourTurnException
 
 
 class GameManager:
@@ -54,6 +55,23 @@ class GameManager:
         return GameState(game.state, game.turn_num, player_username, opponent_name,
                          game.get_functions_by_username(player_username), game.get_functions_by_username(opponent_name),
                          game.get_operators_by_username(player_username), game.get_operators_by_username(opponent_name))
+
+    def make_turn(self, player_username, operator_index, functions):
+        try:
+            game = self.current_games[self.users_to_games[player_username]]
+        except KeyError:
+            raise GameNoSuchPlayerException()
+
+        if game.state != STARTED:
+            raise GameIsNotStartedException()
+
+        if game.current_player().name != player_username:
+            raise GameNotYourTurnException()
+
+        position = functions[0]
+        game.apply_operator(operator_index, functions)
+        result = game.get_function(position)
+        return latex(result)
 
 
 class GameState:

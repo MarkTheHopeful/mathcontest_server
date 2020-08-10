@@ -1,5 +1,6 @@
 from app import app
 import app.functions as funs
+from flask import request
 
 
 @app.route('/')
@@ -41,3 +42,9 @@ def drop_table(secret_code):
 @app.route('/game/get_state/<token>')
 def game_get_state(token):
     return funs.get_game_state(token)
+
+
+@app.route('/game/make_turn/<token>/<op_ind>', methods=['POST'])
+def game_make_turn(token, op_ind):
+    fun_inds = request.get_json()["fun_indexes"]
+    return funs.make_turn(token, op_ind, fun_inds)
