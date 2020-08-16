@@ -8,16 +8,13 @@
 
 import json
 import datetime
-from app import gm
+from app import gm, dbm
 from utils.encrypt import encrypt_password, check_password
-from utils.error_messages import CODE
+from exceptions.error_messages import CODE
 from config import Config
-from app.db_queries import get_tokens_by_user_id, get_user_id_by_username, get_passhash_by_username, \
-    insert_token_to_username, insert_user, clear_all_tables, insert_functions_to_username, insert_operators_to_username, \
-    get_username_and_exptime_by_token, delete_token
-from app.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException, \
+from exceptions.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException, \
     DBTokenNotFoundException
-from game.GameExceptions import GameException
+from exceptions.GameExceptions import GameException
 from utils.server_specials import gen_token
 from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 
@@ -41,7 +38,6 @@ class Response:
 def function_response(result_function):
     def wrapped(*args, **kwargs):
         code = 500
-        data = json.dumps({})
         try:
             code, data = result_function(*args, **kwargs)
         except DBException as e:
@@ -58,11 +54,11 @@ def function_response(result_function):
 
 def token_auth(token):
     try:
-        username, exp_time = get_username_and_exptime_by_token(token)
+        username, exp_time = dbm.get_username_and_exptime_by_token(token)
     except DBTokenNotFoundException:
         return -1
     if exp_time < datetime.datetime.utcnow():
-        delete_token(token)
+        dbm.delete_token(token)
         return -1
     return username
 
@@ -114,14 +110,14 @@ def get_game_state(token):
 
 
 @function_response
-def make_turn(token, op_ind, fun_inds):
+def make_turn(token, op_ind, fun_indexes):
     username = token_auth(token)
     if username == -1:
         code = 400
         data = json.dumps({})
         return code, data
     try:
-        gm.make_turn(username, op_ind, fun_inds)
+        gm.make_turn(username, op_ind, fun_indexes)
     except GameException:
         raise Exception("NOT DONE YET")
 
@@ -130,9 +126,9 @@ def make_turn(token, op_ind, fun_inds):
 def register(username, password):
     pass_hash = encrypt_password(password)
     try:
-        insert_user(username, pass_hash)
-        insert_functions_to_username(username, BASE_FUNCTIONS)
-        insert_operators_to_username(username, BASE_OPERATORS)
+        dbm.insert_user(username, pass_hash)
+        dbm.insert_functions_to_username(username, BASE_FUNCTIONS)
+        dbm.insert_operators_to_username(username, BASE_OPERATORS)
     except DBUserAlreadyExistsException:
         code = 405
         data = json.dumps({})
@@ -146,7 +142,7 @@ def register(username, password):
 @function_response
 def login(username, password):
     try:
-        u_hash = get_passhash_by_username(username)
+        u_hash = dbm.get_passhash_by_username(username)
     except DBUserNotFoundException:
         code = 402
         data = json.dumps({})
@@ -158,7 +154,7 @@ def login(username, password):
         return code, data
 
     tok_uuid, tok_exp = gen_token()
-    insert_token_to_username(tok_uuid, tok_exp, username)
+    dbm.insert_token_to_username(tok_uuid, tok_exp, username)
     code = 200
     data = json.dumps({'Token': tok_uuid})
     return code, data
@@ -168,5 +164,5 @@ def login(username, password):
 def drop_tables(secret_code):
     if secret_code != Config.ADMIN_SECRET:
         return 403, json.dumps({})
-    clear_all_tables()
+    dbm.clear_all_tables()
     return 299, json.dumps({})

@@ -1,5 +1,5 @@
 from utils.states import *
-from game.GameExceptions import GameException, GameNoSuchPlayerException
+from exceptions.GameExceptions import GameNoSuchPlayerException
 
 
 class Game:

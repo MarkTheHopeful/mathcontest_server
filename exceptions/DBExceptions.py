@@ -1,4 +1,5 @@
-from utils.error_messages import CODE
+from exceptions.error_messages import CODE
+from sqlalchemy.exc import IntegrityError
 
 
 class DBException(Exception):
