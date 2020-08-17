@@ -15,8 +15,9 @@ class GameManager:
     current_games = []
     ALARMING_AMOUNT_OF_GAMES = 1000
     users_to_games = dict()
+    dbm = None
 
-    def __init__(self, db_manager: DBManager):
+    def init_dbm(self, db_manager: DBManager):
         self.dbm = db_manager
 
     def start_game(self, player_1, player_2):

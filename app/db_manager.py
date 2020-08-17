@@ -25,7 +25,7 @@ class DBManager:
     db = None
     models = None
 
-    def __init__(self, db, models):
+    def init_db(self, db, models):
         self.db = db
         self.models = models
 

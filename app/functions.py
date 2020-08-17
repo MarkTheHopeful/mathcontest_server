@@ -8,7 +8,7 @@
 
 import json
 import datetime
-from app import gm, dbm
+from app.extensions import gm, dbm
 from utils.encrypt import encrypt_password, check_password
 from exceptions.error_messages import CODE
 from config import Config
