@@ -82,7 +82,7 @@ def debug_verify(token, username):
 
 
 @function_response
-def start_game(token, username_other):
+def start_game(token, username_other):      # TODO: check if the second name is real
     username_from = token_auth(token)
     if username_from == -1:
         code = 400
@@ -119,7 +119,7 @@ def make_turn(token, op_ind, fun_indexes):
     try:
         gm.make_turn(username, op_ind, fun_indexes)
     except GameException:
-        raise Exception("NOT DONE YET")
+        raise Exception("NOT DONE YET")         # TODO: do.
 
 
 @function_response
@@ -127,7 +127,7 @@ def register(username, password):
     pass_hash = encrypt_password(password)
     try:
         dbm.insert_user(username, pass_hash)
-        dbm.insert_functions_to_username(username, BASE_FUNCTIONS)
+        dbm.insert_functions_to_username(username, BASE_FUNCTIONS)      # TODO: make templates real
         dbm.insert_operators_to_username(username, BASE_OPERATORS)
     except DBUserAlreadyExistsException:
         code = 405
