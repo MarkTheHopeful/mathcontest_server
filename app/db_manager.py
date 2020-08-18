@@ -1,5 +1,5 @@
 from exceptions.DBExceptions import *
-from utils.converters import convert_array_to_string, convert_string_to_array
+from utils import convert_array_to_string, convert_string_to_array
 from sympy import latex
 from sympy.parsing.latex import parse_latex
 

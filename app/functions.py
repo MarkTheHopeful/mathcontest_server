@@ -15,7 +15,7 @@ from config import Config
 from exceptions.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException, \
     DBTokenNotFoundException
 from exceptions.GameExceptions import GameException
-from utils.server_specials import gen_token
+from utils import gen_token
 from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 
 

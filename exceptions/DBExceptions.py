@@ -22,4 +22,4 @@ class DBUserAlreadyExistsException(DBException):
 
 class DBTokenNotFoundException(DBException):
     def __init__(self, message=""):
-        super(DBTokenNotFoundException, self).__init__()
+        super(DBTokenNotFoundException, self).__init__(603, message)
