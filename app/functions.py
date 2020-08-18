@@ -104,6 +104,7 @@ def get_game_state(token):
         return code, data
 
     game_data = gm.get_game_information(username)
+    # print(game_data.players_functions)
     code = 200
     data = game_data.get_json()
     return code, data
@@ -111,13 +112,16 @@ def get_game_state(token):
 
 @function_response
 def make_turn(token, op_ind, fun_indexes):
+    op_ind = int(op_ind)
+    fun_indexes = list(map(int, fun_indexes))
     username = token_auth(token)
     if username == -1:
         code = 400
         data = json.dumps({})
         return code, data
     try:
-        gm.make_turn(username, op_ind, fun_indexes)
+        lat_result = gm.make_turn(username, op_ind, fun_indexes)
+        return 200, json.dumps({"Result Function": lat_result})
     except GameException:
         raise Exception("NOT DONE YET")         # TODO: do.
 
