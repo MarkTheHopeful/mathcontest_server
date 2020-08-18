@@ -111,7 +111,7 @@ def get_game_state(token):
 
 
 @function_response
-def make_turn(token, op_ind, fun_indexes):
+def make_turn(token, op_ind, fun_indexes):      # FIXME: some strange errors appear
     op_ind = int(op_ind)
     fun_indexes = list(map(int, fun_indexes))
     username = token_auth(token)
@@ -122,8 +122,8 @@ def make_turn(token, op_ind, fun_indexes):
     try:
         lat_result = gm.make_turn(username, op_ind, fun_indexes)
         return 200, json.dumps({"Result Function": lat_result})
-    except GameException:
-        raise Exception("NOT DONE YET")         # TODO: do.
+    except GameException as e:
+        raise e
 
 
 @function_response
