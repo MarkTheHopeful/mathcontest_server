@@ -43,6 +43,7 @@ def get_help_string():
 To see this help type: 'help'
 To quit type: 'exit' or 'quit'"""
 
+
 if __name__ == "__main__":
     # host = input("Enter the host address\n")
     is_registered = input("Are you registered? y/n\n")

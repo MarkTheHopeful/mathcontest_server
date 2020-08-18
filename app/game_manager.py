@@ -6,9 +6,8 @@ from game.game import Game
 from entities.Player import Player
 from game.operators import ALL
 from utils.states import *
-from app.db_queries import get_functions_by_username, get_operators_by_username
-from utils.error_messages import CODE
-from game.GameExceptions import GameException, GameUserIsAlreadyInException, GameNoSuchPlayerException, \
+from app.db_manager import DBManager
+from exceptions.GameExceptions import GameUserIsAlreadyInException, GameNoSuchPlayerException, \
     GameIsNotStartedException, GameNotYourTurnException
 
 
@@ -16,6 +15,10 @@ class GameManager:
     current_games = []
     ALARMING_AMOUNT_OF_GAMES = 1000
     users_to_games = dict()
+    dbm = None
+
+    def init_dbm(self, db_manager: DBManager):
+        self.dbm = db_manager
 
     def start_game(self, player_1, player_2):
         player_1r = self.make_player(player_1)
@@ -38,11 +41,11 @@ class GameManager:
         return play
 
     def make_functions(self, player_username):
-        functions = get_functions_by_username(player_username)
+        functions = self.dbm.get_functions_by_username(player_username)
         return functions
 
     def make_operators(self, player_username):
-        index = get_operators_by_username(player_username)
+        index = self.dbm.get_operators_by_username(player_username)
         return [ALL[x] for x in index]
 
     def get_game_information(self, player_username):

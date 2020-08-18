@@ -1,4 +1,5 @@
-from utils.error_messages import CODE
+from exceptions.error_messages import CODE
+from sqlalchemy.exc import IntegrityError
 
 
 class DBException(Exception):
@@ -21,4 +22,4 @@ class DBUserAlreadyExistsException(DBException):
 
 class DBTokenNotFoundException(DBException):
     def __init__(self, message=""):
-        super(DBTokenNotFoundException, self).__init__()
+        super(DBTokenNotFoundException, self).__init__(603, message)

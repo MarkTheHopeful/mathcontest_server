@@ -1,6 +1,6 @@
-from app import app
 import app.functions as funs
 from flask import request
+from app import app
 
 
 @app.route('/')

@@ -1,15 +1,22 @@
 from flask import Flask
+from app.extensions import db, migrate, dbm, gm
+from app import models
 from config import Config
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 
-app = Flask(__name__)
-app.config.from_object(Config)
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 
-from app.game_manager import GameManager
+def create_app(config_object=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_object)
+    register_extensions(app)
+    return app
 
-gm = GameManager()
 
-from app import routes, models
+def register_extensions(app):
+    db.init_app(app)
+    migrate.init_app(app, db)
+    dbm.init_db(db, models)
+    gm.init_dbm(dbm)
+
+
+app = create_app()
+from app import routes  # FIXME: ugly.
