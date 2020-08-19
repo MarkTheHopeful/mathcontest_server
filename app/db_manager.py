@@ -127,3 +127,9 @@ class DBManager:
         res = convert_array_to_string([old_ops, new_ops]).strip()
         u.operators = res
         self.db.session.commit()
+
+    def is_user_exists(self, username):
+        u = self.models.User.query.filter_by(username=username).first()
+        if u is None:
+            return False
+        return True

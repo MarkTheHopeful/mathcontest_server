@@ -14,7 +14,7 @@ from exceptions.error_messages import CODE
 from config import Config
 from exceptions.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException, \
     DBTokenNotFoundException
-from exceptions.GameExceptions import GameException
+from exceptions.GameExceptions import GameException, GameUserIsAlreadyInException
 from utils import gen_token
 from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 
@@ -27,7 +27,7 @@ class Response:
         self.code = code
         if data is None:
             data = json.dumps({})
-        self.data = data
+        self.data = json.loads(data)
 
     def __str__(self):
         return str(json.dumps({"code": self.code,
@@ -90,9 +90,11 @@ def start_game(token, username_other):
     """
     :param token: token of the invitor, used to get theirs username
     :param username_other: username of the invited, should be real user's username
-    # TODO: check if the invited name is real and is not invitor
-    :return: 400, {} if token is invalid or outdated; 200, {"Game ID": <game_id>} if everything is ok and game created
-    TODO: Can throw GameUserIsAlreadyInException, should be handled
+    :return: 200, {"Game ID": <game_id>} if everything is ok and game created;
+    400, {} if the token is invalid or outdated;
+    404, {} if there is no user with "username_other"
+    406, {} if one of the users is already in game;
+    407, {} if invited user is the invitor itself
     """
     username_from = token_auth(token)
     if username_from == -1:
@@ -100,7 +102,23 @@ def start_game(token, username_other):
         data = json.dumps({})
         return code, data
 
-    game_id = gm.start_game(username_from, username_other)
+    if not dbm.is_user_exists(username_other):
+        code = 404
+        data = json.dumps({})
+        return code, data
+
+    if username_other == username_from:
+        code = 407
+        data = json.dumps({})
+        return code, data
+
+    try:
+        game_id = gm.start_game(username_from, username_other)
+    except GameUserIsAlreadyInException:
+        code = 406
+        data = json.dumps({})
+        return code, data
+
     code = 200
     data = json.dumps({"Game ID": str(game_id)})
     return code, data
