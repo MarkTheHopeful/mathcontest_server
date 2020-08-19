@@ -10,6 +10,7 @@ CODE = {
     405: "Username is already in use",
     406: "The user is already in game",
     407: "You cannot play against yourself",
+    408: "You are not in any game",
 
     500: "Unknown server error",
     502: "Internal database error",

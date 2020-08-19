@@ -1,6 +1,8 @@
 import http.client
 import json
 
+from game.game_state import deserialize_game_state
+
 host = "127.0.0.1:5000"  # FIXME: temporal
 token = ""  # initialises later
 
@@ -76,6 +78,18 @@ def start_game_with(opponent_name):
         return state + ":\n" + "Error information was not received"
 
 
+def get_game_state():
+    code, state, data = send_request(f"/game/get_state/{token}")
+    if code == 200:
+        return True, data
+    elif code == 400 or code == 408:
+        return False, state
+    try:
+        return False, state + ":\n:: " + data["Error"]
+    except KeyError:
+        return False, state + ":\n" + "Error information was not received"
+
+
 def get_help_string():
     return """\
 To see this help type: 'help'
@@ -101,7 +115,6 @@ if __name__ == "__main__":
         if not fail:
             token = result
             print("Login successful")
-            # print(token)  TODO: add special debug mode
             break
         print("Login failed with error:")
         print(result)
@@ -126,5 +139,21 @@ if __name__ == "__main__":
             opponent_username = query[1]
             result = start_game_with(opponent_username)
             print(result)
+        elif query == "game state":
+            is_ok, info = get_game_state()
+            if is_ok:
+                game_state = deserialize_game_state(info)
+                print(f"You are {game_state.player}, your opponent is {game_state.opponent}")
+                print(f"The game state is {game_state.state}, the turn number is {game_state.turn_num}")
+                print("Your functions:")
+                print(*game_state.players_functions)
+                print("Your opponent's functions:")
+                print(*game_state.opponents_functions)
+                print("Your operators:")
+                print(*game_state.players_operators)
+                print("Your opponent's operators:")
+                print(*game_state.opponents_operators)
+            else:
+                print(info)
         else:
             print("No such command")

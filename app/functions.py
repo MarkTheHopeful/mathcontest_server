@@ -14,7 +14,7 @@ from exceptions.error_messages import CODE
 from config import Config
 from exceptions.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException, \
     DBTokenNotFoundException
-from exceptions.GameExceptions import GameException, GameUserIsAlreadyInException
+from exceptions.GameExceptions import GameException, GameUserIsAlreadyInException, GameUserHasNoGamesException
 from utils import gen_token
 from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 
@@ -126,13 +126,22 @@ def start_game(token, username_other):
 
 @function_response
 def get_game_state(token):
+    """
+    :param token: user token
+    :return: 200, game_data JSONed if everything is ok; 400, {} if the token is invalid, 408, {} if user has no games
+    """
     username = token_auth(token)
     if username == -1:
         code = 400
         data = json.dumps({})
         return code, data
 
-    game_data = gm.get_game_information(username)
+    try:
+        game_data = gm.get_game_information(username)
+    except GameUserHasNoGamesException:
+        code = 408
+        data = json.dumps({})
+        return code, data
     code = 200
     data = game_data.get_json()
     return code, data

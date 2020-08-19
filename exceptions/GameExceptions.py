@@ -16,3 +16,7 @@ class GameIsNotStartedException(GameException):
 
 class GameNotYourTurnException(GameException):
     pass
+
+
+class GameUserHasNoGamesException(GameException):
+    pass

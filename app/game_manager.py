@@ -1,14 +1,13 @@
-import json
-
 from sympy import latex
 
 from game.game import Game
 from entities.Player import Player
+from game.game_state import GameState
 from game.operators import ALL
 from utils.states import *
 from app.db_manager import DBManager
 from exceptions.GameExceptions import GameUserIsAlreadyInException, GameNoSuchPlayerException, \
-    GameIsNotStartedException, GameNotYourTurnException
+    GameIsNotStartedException, GameNotYourTurnException, GameUserHasNoGamesException
 
 
 class GameManager:
@@ -50,7 +49,7 @@ class GameManager:
         try:
             game = self.current_games[self.users_to_games[player_username]]
         except KeyError:
-            return GameState(NOT_EXISTS)
+            raise GameUserHasNoGamesException()
 
         opponent_name = game.get_opponent(player_username)
         return GameState(game.state, game.turn_num, player_username, opponent_name,
@@ -73,36 +72,3 @@ class GameManager:
         game.apply_operator(operator_index, functions)
         result = game.get_function(position)
         return latex(result)
-
-
-class GameState:
-    state = NOT_EXISTS
-
-    def __init__(self, state, turn_num=-1, player="", opponent="", players_functions=None, opponents_functions=None,
-                 players_operators=None, opponents_operators=None):
-        if opponents_operators is None:
-            opponents_operators = []
-        if players_operators is None:
-            players_operators = []
-        if opponents_functions is None:
-            opponents_functions = []
-        if players_functions is None:
-            players_functions = []
-        self.state = state
-        self.turn_num = turn_num
-        self.player = player
-        self.opponent = opponent
-        self.players_functions = list(map(latex, players_functions))
-        self.opponents_function = list(map(latex, opponents_functions))
-        self.players_operators = list(map(str, players_operators))
-        self.opponents_operators = list(map(str, opponents_operators))
-
-    def get_json(self):
-        return json.dumps({"GameState": self.state,
-                           "Turn Number": self.turn_num,
-                           "Player Name": self.player,
-                           "Opponent Name": self.opponent,
-                           "Players Functions": self.players_functions,
-                           "Opponents Functions": self.opponents_function,
-                           "Players Operators": self.players_operators,
-                           "Opponents Operators": self.opponents_operators})
