@@ -24,14 +24,10 @@ class GameManager:
         player_1r = self.make_player(player_1)
         player_2r = self.make_player(player_2)
         game = Game(player_1r, player_2r, len(self.current_games))
-        print(self.users_to_games, player_1, player_2)
-        try:
-            _ = self.users_to_games[player_1]
-            _ = self.users_to_games[player_2]
-            # FIXME: if the second player is in game, it won't be noticed!
+
+        if player_1 in self.users_to_games or player_2 in self.users_to_games:
             raise GameUserIsAlreadyInException()
-        except KeyError:
-            pass
+
         self.users_to_games[player_1] = game.game_id
         self.users_to_games[player_2] = game.game_id
         self.current_games.append(game)
