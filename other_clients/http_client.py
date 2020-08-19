@@ -18,7 +18,7 @@ def send_request(request_line):
     resp = conn.getresponse().read()
     stringed_json = resp.decode('utf8').replace("'", '"')
     datum = json.loads(stringed_json)
-    return datum['code'], datum['state'], json.loads(datum['data'])
+    return datum['code'], datum['state'], datum['data']
 
 
 def register():
@@ -68,7 +68,7 @@ def start_game_with(opponent_name):
     code, state, data = send_request(f"/start_game/{token}/{opponent_name}")
     if code == 200:
         return state + f"\n Game ID: {data['Game ID']}"
-    if code == 400:
+    if code == 400 or code == 404 or code == 406 or code == 407:
         return state
     try:
         return state + ":\n:: " + data["Error"]
@@ -83,6 +83,7 @@ Too check server's status type: 'status'
 To quit type: 'exit' or 'quit'"""
 
 
+# TODO: catch the "server is offline" situation
 if __name__ == "__main__":
     # host = input("Enter the host address\n")
     is_registered = input("Are you registered? y/n\n")
