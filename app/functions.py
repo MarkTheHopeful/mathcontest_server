@@ -36,6 +36,17 @@ class Response:
 
 
 def function_response(result_function):
+    """
+    :param result_function: function to wrap, have to return code (Int) and data (JSON)
+    :return: wrapped function, input stays same, exceptions handled, output converted to str(Response)
+    Wrapper for all functions in routes
+    Gets code and data from the wrapped function and returns a [[app.functions.Response]] object, casted to string
+    If an exception occurs, its string goes to the data["Error"] and logs (to stdout)
+
+    Catches DBExceptions with error codes 6xx (699 for unknown db error)
+    Catches all other exceptions with error code 500
+    """
+
     def wrapped(*args, **kwargs):
         code = 500
         try:
@@ -43,7 +54,7 @@ def function_response(result_function):
         except DBException as e:
             code = e.code
             data = json.dumps({"Error": str(e)})
-            print(e)
+            print("DBException:", e)
         except Exception as e:
             data = json.dumps({"Error": str(e)})
             print(e)
@@ -53,6 +64,10 @@ def function_response(result_function):
 
 
 def token_auth(token):
+    """
+    :param token: user token, string
+    :return: -1, if no such token exists or if the token is outdated, username otherwise
+    """
     try:
         username, exp_time = dbm.get_username_and_exptime_by_token(token)
     except DBTokenNotFoundException:
@@ -64,25 +79,21 @@ def token_auth(token):
 
 
 @function_response
-def status():
+def status():  # TODO: rewrite to see correct status
     code = 200
     data = json.dumps({'State': 'OK'})
     return code, data
 
 
 @function_response
-def debug_verify(token, username):
-    p_username = token_auth(token)
-    if p_username == username:
-        code = 200
-    else:
-        code = 401
-
-    return code, json.dumps({})
-
-
-@function_response
-def start_game(token, username_other):      # TODO: check if the second name is real
+def start_game(token, username_other):
+    """
+    :param token: token of the invitor, used to get theirs username
+    :param username_other: username of the invited, should be real user's username
+    # TODO: check if the invited name is real and is not invitor
+    :return: 400, {} if token is invalid or outdated; 200, {"Game ID": <game_id>} if everything is ok and game created
+    TODO: Can throw GameUserIsAlreadyInException, should be handled
+    """
     username_from = token_auth(token)
     if username_from == -1:
         code = 400
@@ -104,14 +115,13 @@ def get_game_state(token):
         return code, data
 
     game_data = gm.get_game_information(username)
-    # print(game_data.players_functions)
     code = 200
     data = game_data.get_json()
     return code, data
 
 
 @function_response
-def make_turn(token, op_ind, fun_indexes):      # FIXME: some strange errors appear
+def make_turn(token, op_ind, fun_indexes):  # FIXME: some strange errors appear
     op_ind = int(op_ind)
     fun_indexes = list(map(int, fun_indexes))
     username = token_auth(token)
@@ -128,10 +138,18 @@ def make_turn(token, op_ind, fun_indexes):      # FIXME: some strange errors app
 
 @function_response
 def register(username, password):
+    """
+    :param username: new username, should be unique and consist only of allowed characters
+    TODO: add allowed characters list and verification
+    :param password: password, should be strong
+    TODO: add password check
+    :return: 200, {} if success; 405, {} if username is already in use
+    Can throw DBException, but shouldn't
+    """
     pass_hash = encrypt_password(password)
     try:
         dbm.insert_user(username, pass_hash)
-        dbm.insert_functions_to_username(username, BASE_FUNCTIONS)      # TODO: make templates real
+        dbm.insert_functions_to_username(username, BASE_FUNCTIONS)  # TODO: make templates real
         dbm.insert_operators_to_username(username, BASE_OPERATORS)
     except DBUserAlreadyExistsException:
         code = 405
@@ -145,6 +163,12 @@ def register(username, password):
 
 @function_response
 def login(username, password):
+    """
+    :param username: not empty, should be real username
+    :param password: not empty, should be user's password
+    :return: 402, {} if there is no user with such credentials; 200, {'Token': <token>} if there is
+    Can throw DBException, but shouldn't
+    """
     try:
         u_hash = dbm.get_passhash_by_username(username)
     except DBUserNotFoundException:
