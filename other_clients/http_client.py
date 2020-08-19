@@ -1,7 +1,7 @@
 import http.client
 import json
 
-host = "127.0.0.1:5000"
+host = "127.0.0.1:5000"     # FIXME: temporal
 
 
 def input_normal(input_line, checker=lambda x: x):
@@ -25,8 +25,9 @@ def register():
     password = input_normal("Input your new password:\n")
     req_res = send_request(f"/register/{username}/{password}")
     code = req_res['code']
+    state = req_res['state']
     data = json.loads(req_res['data'])
-    return code, data
+    return code, state, data
 
 
 def login():
@@ -34,13 +35,23 @@ def login():
     password = input_normal("Input your password:\n")
     req_res = send_request(f"/login/{username}/{password}")
     code = req_res['code']
+    state = req_res['state']
     data = json.loads(req_res['data'])
-    return code, data
+    return code, state, data
+
+
+def get_status():
+    req_res = send_request("/status")
+    code = req_res['code']
+    state = req_res['state']
+    data = json.loads(req_res['data'])
+    return code, state, data
 
 
 def get_help_string():
     return """\
 To see this help type: 'help'
+Too check server's status type: 'status'
 To quit type: 'exit' or 'quit'"""
 
 
@@ -49,25 +60,25 @@ if __name__ == "__main__":
     is_registered = input("Are you registered? y/n\n")
     if is_registered.lower() != 'y':
         while True:
-            code, data = register()
+            code, state, data = register()
             if code == 200:
-                print(data['Result'])
+                print(state)
                 break
             else:
                 print("Registration failed with error:")
-                print(data['Error'])
+                print(state)
                 print("Try again!")
     token = ""
     while True:
-        code, data = login()
+        code, state, data = login()
         if code == 200:
-            print(data['Result'])
+            print(state)
             print(f"Your token is {data['Token']}")
             token = data['Token']
             break
         else:
             print("Login failed with error:")
-            print(data['Error'])
+            print(state)
             print("Try again!")
 
     while True:
@@ -78,5 +89,12 @@ if __name__ == "__main__":
             break
         elif query == "help":
             print(get_help_string())
+        elif query == "status":
+            code, state, data = get_status()
+            if code == 200:
+                print(data['State'])
+            else:
+                print("Something is totally wrong with server!")
+                print(data['Error'])
         else:
             print("No such command")
