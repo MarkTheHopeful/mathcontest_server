@@ -2,6 +2,7 @@ import http.client
 import json
 
 host = "127.0.0.1:5000"     # FIXME: temporal
+token = ""                  # initialises later
 
 
 def input_normal(input_line, checker=lambda x: x):
@@ -48,6 +49,14 @@ def get_status():
     return code, state, data
 
 
+def start_game_with(opponent_name):
+    req_res = send_request(f"/start_game/{token}/{opponent_name}")
+    code = req_res['code']
+    state = req_res['state']
+    data = json.loads(req_res['data'])
+    return code, state, data
+
+
 def get_help_string():
     return """\
 To see this help type: 'help'
@@ -68,7 +77,6 @@ if __name__ == "__main__":
                 print("Registration failed with error:")
                 print(state)
                 print("Try again!")
-    token = ""
     while True:
         code, state, data = login()
         if code == 200:
@@ -96,5 +104,19 @@ if __name__ == "__main__":
             else:
                 print("Something is totally wrong with server!")
                 print(data['Error'])
+        elif query.startswith("start_game_with"):
+            query = query.split()
+            if len(query) != 2:
+                print("Illegal amount of arguments. Required: 1, opponent username, given", len(query))
+                continue
+            opponent_username = query[1]
+            code, state, data = start_game_with(opponent_username)
+            if code == 200:
+                print(state, data)
+            else:
+                print("Error encountered!")
+                print(code, state)
+                if code / 100 != 4:
+                    print(data["Error"])
         else:
             print("No such command")
