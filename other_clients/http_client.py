@@ -1,8 +1,8 @@
 import http.client
 import json
 
-host = "127.0.0.1:5000"     # FIXME: temporal
-token = ""                  # initialises later
+host = "127.0.0.1:5000"  # FIXME: temporal
+token = ""  # initialises later
 
 
 def input_normal(input_line, checker=lambda x: x):
@@ -17,44 +17,63 @@ def send_request(request_line):
     conn.request("GET", request_line)
     resp = conn.getresponse().read()
     stringed_json = resp.decode('utf8').replace("'", '"')
-    data = json.loads(stringed_json)
-    return data
+    datum = json.loads(stringed_json)
+    return datum['code'], datum['state'], json.loads(datum['data'])
 
 
 def register():
     username = input_normal("Input your new username:\n")
     password = input_normal("Input your new password:\n")
-    req_res = send_request(f"/register/{username}/{password}")
-    code = req_res['code']
-    state = req_res['state']
-    data = json.loads(req_res['data'])
-    return code, state, data
+    code, state, data = send_request(f"/register/{username}/{password}")
+    try_again = False
+    if code == 200:
+        return try_again, state
+    try_again = True
+    if code == 200 or code == 405:
+        return try_again, state
+    try:
+        return try_again, state + ":\n:: " + data["Error"]
+    except KeyError:
+        return try_again, state + ":\n" + "Error information was not received"
 
 
 def login():
     username = input_normal("Input your username:\n")
     password = input_normal("Input your password:\n")
-    req_res = send_request(f"/login/{username}/{password}")
-    code = req_res['code']
-    state = req_res['state']
-    data = json.loads(req_res['data'])
-    return code, state, data
+    code, state, data = send_request(f"/login/{username}/{password}")
+    try_again = False
+    if code == 200:
+        return try_again, data['Token']
+    try_again = True
+    if code == 402:
+        return try_again, state
+
+    try:
+        return try_again, state + ":\n:: " + data["Error"]
+    except KeyError:
+        return try_again, state + ":\n" + "Error information was not received"
 
 
 def get_status():
-    req_res = send_request("/status")
-    code = req_res['code']
-    state = req_res['state']
-    data = json.loads(req_res['data'])
-    return code, state, data
+    code, state, data = send_request("/status")
+    if code == 200:
+        return state
+    try:
+        return state + ":\n:: " + data["Error"]
+    except KeyError:
+        return state + ":\n" + "Error information was not received"
 
 
 def start_game_with(opponent_name):
-    req_res = send_request(f"/start_game/{token}/{opponent_name}")
-    code = req_res['code']
-    state = req_res['state']
-    data = json.loads(req_res['data'])
-    return code, state, data
+    code, state, data = send_request(f"/start_game/{token}/{opponent_name}")
+    if code == 200:
+        return state + f"\n Game ID: {data['Game ID']}"
+    if code == 400:
+        return state
+    try:
+        return state + ":\n:: " + data["Error"]
+    except KeyError:
+        return state + ":\n" + "Error information was not received"
 
 
 def get_help_string():
@@ -69,25 +88,23 @@ if __name__ == "__main__":
     is_registered = input("Are you registered? y/n\n")
     if is_registered.lower() != 'y':
         while True:
-            code, state, data = register()
-            if code == 200:
-                print(state)
+            fail, result = register()
+            print(result)
+            if not fail:
                 break
-            else:
-                print("Registration failed with error:")
-                print(state)
-                print("Try again!")
-    while True:
-        code, state, data = login()
-        if code == 200:
-            print(state)
-            print(f"Your token is {data['Token']}")
-            token = data['Token']
-            break
-        else:
-            print("Login failed with error:")
-            print(state)
+            print("Registration failed with error:")
+            print(result)
             print("Try again!")
+    while True:
+        fail, result = login()
+        if not fail:
+            token = result
+            print("Login successful")
+            # print(token)  TODO: add special debug mode
+            break
+        print("Login failed with error:")
+        print(result)
+        print("Try again!")
 
     while True:
         query = input("What would you like to do next?\n")
@@ -98,25 +115,15 @@ if __name__ == "__main__":
         elif query == "help":
             print(get_help_string())
         elif query == "status":
-            code, state, data = get_status()
-            if code == 200:
-                print(data['State'])
-            else:
-                print("Something is totally wrong with server!")
-                print(data['Error'])
+            result = get_status()
+            print(result)
         elif query.startswith("start_game_with"):
             query = query.split()
             if len(query) != 2:
                 print("Illegal amount of arguments. Required: 1, opponent username, given", len(query))
                 continue
             opponent_username = query[1]
-            code, state, data = start_game_with(opponent_username)
-            if code == 200:
-                print(state, data)
-            else:
-                print("Error encountered!")
-                print(code, state)
-                if code / 100 != 4:
-                    print(data["Error"])
+            result = start_game_with(opponent_username)
+            print(result)
         else:
             print("No such command")
