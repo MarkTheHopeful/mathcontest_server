@@ -37,6 +37,7 @@ class Game:
                 position -= len(player.functions)
                 player = self.current_opponent()
             player.functions[position] = res_function
+            self.turn_num += 1
             return APPLY_SUCCESS
         except Exception:  # TODO: This is very dumb
             return APPLY_FAILED

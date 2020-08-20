@@ -11,6 +11,8 @@ CODE = {
     406: "The user is already in game",
     407: "You cannot play against yourself",
     408: "You are not in any game",
+    409: "Not your turn",
+    410: "Unknown game error",
 
     500: "Unknown server error",
     502: "Internal database error",

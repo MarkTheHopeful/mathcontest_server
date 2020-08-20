@@ -1,9 +1,12 @@
-import http.client
+import os
+
+import requests
 import json
 
 from game.game_state import deserialize_game_state
 
-host = "127.0.0.1:5000"  # FIXME: temporal
+host = os.environ.get("MATHCONTEST_SERVER") or "http://127.0.0.1:5000"
+current_game_state = None
 token = ""  # initialises later
 
 
@@ -14,11 +17,14 @@ def input_normal(input_line, checker=lambda x: x):
     return temp
 
 
-def send_request(request_line):
-    conn = http.client.HTTPConnection(host)
-    conn.request("GET", request_line)
-    resp = conn.getresponse().read()
-    stringed_json = resp.decode('utf8').replace("'", '"')
+def send_request(request_line, j_payload=None):
+    if j_payload is None:
+        conn = requests.get(host + request_line)
+    else:
+        conn = requests.post(host + request_line, json=j_payload)
+
+    resp = conn.text
+    stringed_json = resp.replace("'", '"')
     datum = json.loads(stringed_json)
     return datum['code'], datum['state'], datum['data']
 
@@ -90,15 +96,59 @@ def get_game_state():
         return False, state + ":\n" + "Error information was not received"
 
 
+def make_turn():
+    print("Choose place to the new function! It will also be the first argument")
+    pos = int(input_normal("Enter correct position:\n",
+                           lambda ind:
+                           0 <= int(ind) < len(current_game_state.players_functions) + len(
+                               current_game_state.opponents_functions)))
+    operator_ind = int(input_normal("Enter the operator's index:\n",
+                                    lambda ind: 0 <= int(ind) <= len(current_game_state.players_operators)))
+    args = [pos]
+    while len(args) < current_game_state.players_operators_args[operator_ind]:
+        args.append(int(input_normal("Enter another argument's index:\n",
+                                     lambda ind:
+                                     0 <= int(ind) < len(current_game_state.players_functions) + len(
+                                         current_game_state.opponents_functions))))
+
+    code, state, data = send_request(f"/game/make_turn/{token}/{operator_ind}/0", j_payload={"fun_indexes": args})
+    if code == 200:
+        return f"{state}, result functions is {data['Result Function']}"
+    elif code == 400 or code == 409:
+        return state
+    else:
+        try:
+            return state + ":\n:: " + data["Error"]
+        except KeyError:
+            return state + ":\n" + "Error information was not received"
+
+
 def get_help_string():
     return """\
 To see this help type: 'help'
-Too check server's status type: 'status'
+To check server's status type: 'status'
+To start game with somebody type: 'start_game_with <opponent's username>'
+To get state of your current game type: 'game state'
+To make turn type: 'make turn'
 To quit type: 'exit' or 'quit'"""
+
+
+def print_game_state(game_state):
+    print(f"You are {game_state.player}, your opponent is {game_state.opponent}")
+    print(f"The game state is {game_state.state}, the turn number is {game_state.turn_num}")
+    print("Your functions:")
+    print(*game_state.players_functions)
+    print("Your opponent's functions:")
+    print(*game_state.opponents_functions)
+    print("Your operators:")
+    print(*game_state.players_operators)
+    print("Your opponent's operators:")
+    print(*game_state.opponents_operators)
 
 
 # TODO: catch the "server is offline" situation
 if __name__ == "__main__":
+    # print(os.environ.get('PYTHONPATH'))
     # host = input("Enter the host address\n")
     is_registered = input("Are you registered? y/n\n")
     if is_registered.lower() != 'y':
@@ -120,6 +170,18 @@ if __name__ == "__main__":
         print(result)
         print("Try again!")
 
+    is_ok, info = get_game_state()
+    if is_ok:
+        current_game_state = deserialize_game_state(info)
+        print("Found a game, where you are already in! Would you like to see its state? (y/n)")
+        _ = input()
+        if _.lower() == "y":
+            print_game_state(current_game_state)
+        else:
+            print("Okay, you can always access it via 'game state' command.")
+    else:
+        current_game_state = None
+
     while True:
         query = input("What would you like to do next?\n")
 
@@ -138,22 +200,38 @@ if __name__ == "__main__":
                 continue
             opponent_username = query[1]
             result = start_game_with(opponent_username)
-            print(result)
+            is_ok, info = get_game_state()
+            if is_ok:
+                current_game_state = deserialize_game_state(info)
+                print(result)
+            else:
+                print("The game started successfully, but by some reasons you can't get game information")
+                print(info)
+
         elif query == "game state":
             is_ok, info = get_game_state()
             if is_ok:
-                game_state = deserialize_game_state(info)
-                print(f"You are {game_state.player}, your opponent is {game_state.opponent}")
-                print(f"The game state is {game_state.state}, the turn number is {game_state.turn_num}")
-                print("Your functions:")
-                print(*game_state.players_functions)
-                print("Your opponent's functions:")
-                print(*game_state.opponents_functions)
-                print("Your operators:")
-                print(*game_state.players_operators)
-                print("Your opponent's operators:")
-                print(*game_state.opponents_operators)
+                current_game_state = deserialize_game_state(info)
+                print_game_state(current_game_state)
             else:
                 print(info)
+        elif query == "make turn":
+            is_ok, info = get_game_state()
+            if not is_ok:
+                print("Encountered an error while trying to update your game state. Error:")
+                print(info)
+                continue
+            current_game_state = deserialize_game_state(info)
+            print(make_turn())
+            is_ok, info = get_game_state()
+            if not is_ok:
+                print("Encountered an error while trying to update your game state. Error:")
+                print(info)
+                continue
+            current_game_state = deserialize_game_state(info)
+            _ = input("Would you like to see new game state? (y/n)")
+            if _ == "y":
+                print_game_state(current_game_state)
+
         else:
             print("No such command")

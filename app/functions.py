@@ -14,7 +14,8 @@ from exceptions.error_messages import CODE
 from config import Config
 from exceptions.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException, \
     DBTokenNotFoundException
-from exceptions.GameExceptions import GameException, GameUserIsAlreadyInException, GameUserHasNoGamesException
+from exceptions.GameExceptions import GameException, GameUserIsAlreadyInException, GameUserHasNoGamesException, \
+    GameNotYourTurnException
 from utils import gen_token
 from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 
@@ -55,6 +56,10 @@ def function_response(result_function):
             code = e.code
             data = json.dumps({"Error": str(e)})
             print("DBException:", e)
+        except GameException as e:
+            code = 410
+            data = json.dumps({"Error": str(e)})
+            print("GameException:", e)
         except Exception as e:
             data = json.dumps({"Error": str(e)})
             print(e)
@@ -149,7 +154,7 @@ def get_game_state(token, is_latex):
 
 
 @function_response
-def make_turn(token, op_ind, fun_indexes, is_latex):  # FIXME: some strange errors appear
+def make_turn(token, op_ind, fun_indexes, is_latex):
     op_ind = int(op_ind)
     fun_indexes = list(map(int, fun_indexes))
     username = token_auth(token)
@@ -160,7 +165,10 @@ def make_turn(token, op_ind, fun_indexes, is_latex):  # FIXME: some strange erro
     try:
         lat_result = gm.make_turn(username, op_ind, fun_indexes, is_latex)
         return 200, json.dumps({"Result Function": lat_result})
+    except GameNotYourTurnException as e:
+        return 409, json.dumps({})
     except GameException as e:
+        print(e)
         raise e
 
 
