@@ -1,7 +1,6 @@
 from exceptions.DBExceptions import *
 from utils import convert_array_to_string, convert_string_to_array
-from sympy import latex
-from sympy.parsing.latex import parse_latex
+from sympy.parsing.sympy_parser import parse_expr
 
 
 def database_response(database_fun):
@@ -97,7 +96,7 @@ class DBManager:
         if u is None:
             raise DBUserNotFoundException()
         print(u.functions)
-        return convert_string_to_array(u.functions, auto_type_caster=parse_latex)
+        return convert_string_to_array(u.functions, auto_type_caster=parse_expr)
 
     @database_response
     def get_operators_by_username(self, username):
@@ -112,7 +111,7 @@ class DBManager:
         if u is None:
             raise DBUserNotFoundException()
         old_funs = u.functions
-        new_funs = convert_array_to_string(functions, auto_type_caster=latex)
+        new_funs = convert_array_to_string(functions, auto_type_caster=str)
         res = convert_array_to_string([old_funs, new_funs]).strip()
         u.functions = res
         self.db.session.commit()

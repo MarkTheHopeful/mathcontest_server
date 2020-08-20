@@ -34,12 +34,12 @@ def drop_table(secret_code):
     return funs.drop_tables(secret_code)
 
 
-@app.route('/game/get_state/<token>')
-def game_get_state(token):
-    return funs.get_game_state(token)
+@app.route('/game/get_state/<token>/<is_latex>')
+def game_get_state(token, is_latex):
+    return funs.get_game_state(token, is_latex)
 
 
-@app.route('/game/make_turn/<token>/<op_ind>', methods=['POST'])
-def game_make_turn(token, op_ind):
+@app.route('/game/make_turn/<token>/<op_ind>/<is_latex>', methods=['POST'])
+def game_make_turn(token, op_ind, is_latex):
     fun_inds = request.get_json()["fun_indexes"]
-    return funs.make_turn(token, op_ind, fun_inds)
+    return funs.make_turn(token, op_ind, fun_inds, is_latex)
