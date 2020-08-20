@@ -56,7 +56,7 @@ class GameManager:
                          game.get_functions_by_username(player_username), game.get_functions_by_username(opponent_name),
                          game.get_operators_by_username(player_username), game.get_operators_by_username(opponent_name))
 
-    def make_turn(self, player_username, operator_index, functions):
+    def make_turn(self, player_username, operator_index, functions, is_latex):
         try:
             game = self.current_games[self.users_to_games[player_username]]
         except KeyError:
@@ -71,4 +71,6 @@ class GameManager:
         position = functions[0]
         game.apply_operator(operator_index, functions)
         result = game.get_function(position)
+        if is_latex == "0":
+            return str(result)
         return latex(result)

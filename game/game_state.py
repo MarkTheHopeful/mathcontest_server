@@ -2,8 +2,9 @@ import json
 
 from sympy import latex
 
-from sympy.parsing.latex import parse_latex
+from sympy.parsing.sympy_parser import parse_expr
 from utils.states import NOT_EXISTS
+from game.operators import make_smart_rep
 
 
 class GameState:
@@ -27,29 +28,29 @@ class GameState:
         self.opponents_functions = opponents_functions
         self.players_operators = players_operators
         self.opponents_operators = opponents_operators
-        # self.players_functions = list(map(latex, players_functions))
-        # self.opponents_function = list(map(latex, opponents_functions))
-        # self.players_operators = list(map(str, players_operators))
-        # self.opponents_operators = list(map(str, opponents_operators))
 
-    def get_json(self):
+    def get_json(self, latex_on=False):
+        conv_fun = str
+        oper_conv = make_smart_rep(latex_on)
+        if latex_on:
+            conv_fun = latex
         return json.dumps({"GameState": self.state,
                            "Turn Number": self.turn_num,
                            "Player Name": self.player,
                            "Opponent Name": self.opponent,
-                           "Players Functions": list(map(latex, self.players_functions)),
-                           "Opponents Functions": list(map(latex, self.opponents_functions)),
-                           "Players Operators": list(map(str, self.players_operators)),
-                           "Opponents Operators": list(map(str, self.opponents_operators))})
+                           "Players Functions": list(map(conv_fun, self.players_functions)),
+                           "Opponents Functions": list(map(conv_fun, self.opponents_functions)),
+                           "Players Operators": list(map(oper_conv, self.players_operators)),
+                           "Opponents Operators": list(map(oper_conv, self.opponents_operators))})
 
 
-def deserialize_game_state(json_dict):
+def deserialize_game_state(json_dict):  # NON LATEX STRICT
     game_state = json_dict['GameState']
     turn_number = json_dict['Turn Number']
     player_name = json_dict['Player Name']
     opponent_name = json_dict["Opponent Name"]
-    players_functions = list(map(parse_latex, json_dict['Players Functions']))
-    opponents_functions = list(map(parse_latex, json_dict['Opponents Functions']))
+    players_functions = list(map(parse_expr, json_dict['Players Functions']))
+    opponents_functions = list(map(parse_expr, json_dict['Opponents Functions']))
     players_operators = json_dict['Players Operators']
     opponents_operators = json_dict['Opponents Operators']
     return GameState(game_state, turn_number, player_name, opponent_name, players_functions, opponents_functions,

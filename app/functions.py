@@ -125,8 +125,9 @@ def start_game(token, username_other):
 
 
 @function_response
-def get_game_state(token):
+def get_game_state(token, is_latex):
     """
+    :param is_latex: '0' if should return non-latex functions, otherwise returns latex functions
     :param token: user token
     :return: 200, game_data JSONed if everything is ok; 400, {} if the token is invalid, 408, {} if user has no games
     """
@@ -143,12 +144,12 @@ def get_game_state(token):
         data = json.dumps({})
         return code, data
     code = 200
-    data = game_data.get_json()
+    data = game_data.get_json(is_latex != "0")
     return code, data
 
 
 @function_response
-def make_turn(token, op_ind, fun_indexes):  # FIXME: some strange errors appear
+def make_turn(token, op_ind, fun_indexes, is_latex):  # FIXME: some strange errors appear
     op_ind = int(op_ind)
     fun_indexes = list(map(int, fun_indexes))
     username = token_auth(token)
@@ -157,7 +158,7 @@ def make_turn(token, op_ind, fun_indexes):  # FIXME: some strange errors appear
         data = json.dumps({})
         return code, data
     try:
-        lat_result = gm.make_turn(username, op_ind, fun_indexes)
+        lat_result = gm.make_turn(username, op_ind, fun_indexes, is_latex)
         return 200, json.dumps({"Result Function": lat_result})
     except GameException as e:
         raise e

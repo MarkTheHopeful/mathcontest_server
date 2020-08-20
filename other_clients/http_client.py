@@ -79,7 +79,7 @@ def start_game_with(opponent_name):
 
 
 def get_game_state():
-    code, state, data = send_request(f"/game/get_state/{token}")
+    code, state, data = send_request(f"/game/get_state/{token}/0")
     if code == 200:
         return True, data
     elif code == 400 or code == 408:
