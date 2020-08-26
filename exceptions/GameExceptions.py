@@ -20,3 +20,7 @@ class GameNotYourTurnException(GameException):
 
 class GameUserHasNoGamesException(GameException):
     pass
+
+
+class GameUserIsAlreadyInQueueException(GameException):
+    pass

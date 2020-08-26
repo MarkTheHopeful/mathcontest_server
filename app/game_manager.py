@@ -7,17 +7,39 @@ from game.operators import ALL
 from utils.states import *
 from app.db_manager import DBManager
 from exceptions.GameExceptions import GameUserIsAlreadyInException, GameNoSuchPlayerException, \
-    GameIsNotStartedException, GameNotYourTurnException, GameUserHasNoGamesException
+    GameIsNotStartedException, GameNotYourTurnException, GameUserHasNoGamesException, GameUserIsAlreadyInQueueException
 
 
 class GameManager:
     current_games = []
     ALARMING_AMOUNT_OF_GAMES = 1000
     users_to_games = dict()
+    waiting_queue = list()
     dbm = None
 
     def init_dbm(self, db_manager: DBManager):
         self.dbm = db_manager
+
+    def put_user_to_queue(self, username):
+        if username in self.users_to_games:
+            if self.users_to_games[username] == NOT_STARTED:
+                raise GameUserIsAlreadyInQueueException()
+            elif self.users_to_games[username] == ENDED_OK:
+                self.users_to_games[username] = NOT_STARTED
+            else:
+                raise GameUserIsAlreadyInException
+
+        self.waiting_queue.append(username)
+
+    def get_queue_len(self):
+        return len(self.waiting_queue)
+
+    def start_game_if_possible(self):
+        if len(self.waiting_queue) <= 1:
+            return len(self.waiting_queue), -1
+        p2 = self.waiting_queue.pop(1)
+        p1 = self.waiting_queue.pop(0)      # FIXME: too slow!
+        return len(self.waiting_queue), self.start_game(p1, p2)
 
     def start_game(self, player_1, player_2):
         player_1r = self.make_player(player_1)

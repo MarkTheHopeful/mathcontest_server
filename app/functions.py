@@ -15,7 +15,7 @@ from config import Config
 from exceptions.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException, \
     DBTokenNotFoundException
 from exceptions.GameExceptions import GameException, GameUserIsAlreadyInException, GameUserHasNoGamesException, \
-    GameNotYourTurnException
+    GameNotYourTurnException, GameUserIsAlreadyInQueueException
 from utils import gen_token
 from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 
@@ -88,6 +88,23 @@ def status():  # TODO: rewrite to see correct status
     code = 200
     data = json.dumps({'State': 'OK'})
     return code, data
+
+
+@function_response
+def put_user_in_queue(token):
+    username = token_auth(token)
+    if username == -1:
+        code = 400
+        data = json.dumps({})
+        return code, data
+
+    try:
+        gm.put_user_to_queue(username)
+    except GameUserIsAlreadyInException:
+        return 406, json.dumps({})
+    except GameUserIsAlreadyInQueueException:
+        return 411, json.dumps({})
+    return 200, json.dumps({})
 
 
 @function_response

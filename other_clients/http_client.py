@@ -205,7 +205,7 @@ if __name__ == "__main__":
                 current_game_state = deserialize_game_state(info)
                 print(result)
             else:
-                print("The game started successfully, but by some reasons you can't get game information")
+                print("The game started successfully, but by some reasons you can't get game information")  # FIXME
                 print(info)
 
         elif query == "game state":

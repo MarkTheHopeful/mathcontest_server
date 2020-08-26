@@ -29,6 +29,11 @@ def start_game(invitor_token, invited_username):
     return funs.start_game(invitor_token, invited_username)
 
 
+@app.route('/put_user_in_queue/<token>')
+def put_user_in_queue(token):
+    return funs.put_user_in_queue(token)
+
+
 @app.route('/admin/drop_tables/<secret_code>')
 def drop_table(secret_code):
     return funs.drop_tables(secret_code)

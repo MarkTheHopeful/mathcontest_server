@@ -13,6 +13,7 @@ CODE = {
     408: "You are not in any game",
     409: "Not your turn",
     410: "Unknown game error",
+    411: "The user is already in queue",
 
     500: "Unknown server error",
     502: "Internal database error",
