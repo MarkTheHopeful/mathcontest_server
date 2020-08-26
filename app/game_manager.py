@@ -30,6 +30,7 @@ class GameManager:
                 raise GameUserIsAlreadyInException
 
         self.waiting_queue.append(username)
+        self.users_to_games[username] = NOT_STARTED
 
     def get_queue_len(self):
         return len(self.waiting_queue)
