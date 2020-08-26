@@ -34,6 +34,11 @@ def put_user_in_queue(token):
     return funs.put_user_in_queue(token)
 
 
+@app.route('/get_queue_len')
+def get_queue_len():
+    return funs.get_queue_len()
+
+
 @app.route('/admin/drop_tables/<secret_code>')
 def drop_table(secret_code):
     return funs.drop_tables(secret_code)

@@ -108,6 +108,11 @@ def put_user_in_queue(token):
 
 
 @function_response
+def get_queue_len():
+    return 200, json.dumps({"Length": gm.get_queue_len()})
+
+
+@function_response
 def start_game(token, username_other):
     """
     :param token: token of the invitor, used to get theirs username
