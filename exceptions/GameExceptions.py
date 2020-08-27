@@ -14,6 +14,10 @@ class GameIsNotStartedException(GameException):
     pass
 
 
+class GameIsAlreadyStartedException(GameException):
+    pass
+
+
 class GameNotYourTurnException(GameException):
     pass
 
@@ -23,4 +27,12 @@ class GameUserHasNoGamesException(GameException):
 
 
 class GameUserIsAlreadyInQueueException(GameException):
+    pass
+
+
+class GameNotInQueueException(GameException):
+    pass
+
+
+class GameNotEnoughtPlayersException(GameException):
     pass

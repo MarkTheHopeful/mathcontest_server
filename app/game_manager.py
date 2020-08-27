@@ -7,7 +7,9 @@ from game.operators import ALL
 from utils.states import *
 from app.db_manager import DBManager
 from exceptions.GameExceptions import GameUserIsAlreadyInException, GameNoSuchPlayerException, \
-    GameIsNotStartedException, GameNotYourTurnException, GameUserHasNoGamesException, GameUserIsAlreadyInQueueException
+    GameIsNotStartedException, GameNotYourTurnException, GameUserHasNoGamesException, \
+    GameUserIsAlreadyInQueueException, GameNotInQueueException, GameNotEnoughtPlayersException, \
+    GameIsAlreadyStartedException
 
 
 class GameManager:
@@ -35,12 +37,37 @@ class GameManager:
     def get_queue_len(self):
         return len(self.waiting_queue)
 
-    def start_game_if_possible(self):
-        if len(self.waiting_queue) <= 1:
-            return len(self.waiting_queue), -1
-        p2 = self.waiting_queue.pop(1)
-        p1 = self.waiting_queue.pop(0)      # FIXME: too slow!
-        return len(self.waiting_queue), self.start_game(p1, p2)
+    def check_and_create_game(self, player_1):
+        if player_1 not in self.waiting_queue:
+            raise GameNotInQueueException()
+
+        if len(self.waiting_queue) < 2:
+            raise GameNotEnoughtPlayersException()
+
+        opponent = self.waiting_queue.pop(0)
+        if opponent == player_1:
+            opponent = self.waiting_queue.pop(0)
+        else:
+            self.waiting_queue.pop(self.waiting_queue.index(player_1))
+
+        player_1r = self.make_player(player_1)
+        player_2r = self.make_player(opponent)
+        game = Game(player_1r, player_2r, len(self.current_games))
+        self.current_games.append(game)
+        return self.get_game_information(player_1)
+
+    def confirm_game_start(self, username):
+        try:
+            game = self.current_games[self.users_to_games[username]]
+        except KeyError or IndexError:
+            raise GameUserHasNoGamesException()
+        if game.state != NOT_STARTED:
+            raise GameIsAlreadyStartedException()
+
+        _ = game.confirmed_by
+        print(game.confirmed_by)
+        game.confirm_start(username)
+        return _ != game.confirmed_by
 
     def start_game(self, player_1, player_2):
         player_1r = self.make_player(player_1)

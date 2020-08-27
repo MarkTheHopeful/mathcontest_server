@@ -39,6 +39,16 @@ def get_queue_len():
     return funs.get_queue_len()
 
 
+@app.route('/check_and_create/<token>')
+def check_and_create(token):
+    return funs.check_and_create(token)
+
+
+@app.route('/confirm_game_start/<token>')
+def confirm_game_start(token):
+    return funs.confirm_game_start(token)
+
+
 @app.route('/admin/drop_tables/<secret_code>')
 def drop_table(secret_code):
     return funs.drop_tables(secret_code)

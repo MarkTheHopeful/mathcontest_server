@@ -7,11 +7,21 @@ class Game:
     turn_num = 0
     state = NOT_STARTED
     game_id = -1
+    confirmed_by = 0
 
     def __init__(self, player_1, player_2, id):
         self.players = [player_1, player_2]
         self.game_id = id
-        self.state = STARTED
+        self.state = NOT_STARTED
+
+    def confirm_start(self, username):
+
+        if username == self.current_player().name:
+            self.confirmed_by |= 1
+        if username == self.current_opponent().name:
+            self.confirmed_by |= 2
+        if self.confirmed_by == 3:
+            self.state = STARTED
 
     def current_player(self):
         return self.players[self.turn_num % len(self.players)]

@@ -15,7 +15,8 @@ from config import Config
 from exceptions.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException, \
     DBTokenNotFoundException
 from exceptions.GameExceptions import GameException, GameUserIsAlreadyInException, GameUserHasNoGamesException, \
-    GameNotYourTurnException, GameUserIsAlreadyInQueueException
+    GameNotYourTurnException, GameUserIsAlreadyInQueueException, GameNotInQueueException, \
+    GameNotEnoughtPlayersException, GameIsAlreadyStartedException, GameIsNotStartedException, GameNoSuchPlayerException
 from utils import gen_token
 from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 
@@ -110,6 +111,47 @@ def put_user_in_queue(token):
 @function_response
 def get_queue_len():
     return 200, json.dumps({"Length": gm.get_queue_len()})
+
+
+@function_response
+def check_and_create(token):
+    username = token_auth(token)
+    if username == -1:
+        code = 400
+        data = json.dumps({})
+        return code, data
+
+    try:
+        game_info = gm.check_and_create_game(username)
+    except GameNotInQueueException:
+        return 412, json.dumps({})
+    except GameNotEnoughtPlayersException:
+        return 413, json.dumps({})
+
+    code = 200
+    data = json.dumps({"Player": game_info.player, "Opponent": game_info.opponent})
+    return code, data
+
+
+@function_response
+def confirm_game_start(token):
+    username = token_auth(token)
+    if username == -1:
+        code = 400
+        data = json.dumps({})
+        return code, data
+
+    try:
+        res = gm.confirm_game_start(username)
+    except GameUserHasNoGamesException:
+        return 408, json.dumps({})
+    except GameIsAlreadyStartedException:
+        return 414, json.dumps({})
+
+    if res:
+        return 200, json.dumps({})
+    else:
+        return 201, json.dumps({})
 
 
 @function_response
