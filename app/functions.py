@@ -85,7 +85,11 @@ def token_auth(token):
 
 
 @function_response
-def status():  # TODO: rewrite to see correct status
+def status():  # TODO: rewrite to add meaningful information
+    """
+    Get the server's state
+    :return: 200, 'State' : 'OK', if is ok, Nothing otherwise
+    """
     code = 200
     data = json.dumps({'State': 'OK'})
     return code, data
@@ -93,6 +97,14 @@ def status():  # TODO: rewrite to see correct status
 
 @function_response
 def put_user_in_queue(token):
+    """
+    Add the user with the token to the waiting queue
+    :param token: the user's token, string
+    :return: 200, {} if success;
+    400, {} if the token is invalid or outdated;
+    406, {} if the user is already in game;
+    411, {} if the user is already in queue;
+    """
     username = token_auth(token)
     if username == -1:
         code = 400
@@ -110,11 +122,23 @@ def put_user_in_queue(token):
 
 @function_response
 def get_queue_len():
+    """
+    Get the waiting queue length
+    :return: 200, {"Length": <int>}
+    """
     return 200, json.dumps({"Length": gm.get_queue_len()})
 
 
 @function_response
 def check_and_create(token):
+    """
+    Check if a game can be created with somebody in queue, and if possible, create it (The game.state is NOT_STARTED)
+    :param token: the user's token
+    :return: 200, {"Player": player.username, "Opponent": opponent.username} if game successfully created;
+    400, {} if the token is invalid or outdated
+    412, {} if the user is not in waiting queue
+    413, {} if there is not enough players to create a game
+    """
     username = token_auth(token)
     if username == -1:
         code = 400
@@ -135,6 +159,15 @@ def check_and_create(token):
 
 @function_response
 def confirm_game_start(token):
+    """
+    Confirm that you are ready to the game
+    :param token: user's token
+    :return: 200, {} if confirmed successfully
+    201, {} if the user have already confirmed
+    400, {} if the token is invalid or outdated
+    408, {} if the user is not in any game to confirm
+    414, {} if the game is already started and doesn't require a confirmation
+    """
     username = token_auth(token)
     if username == -1:
         code = 400
@@ -198,7 +231,9 @@ def get_game_state(token, is_latex):
     """
     :param is_latex: '0' if should return non-latex functions, otherwise returns latex functions
     :param token: user token
-    :return: 200, game_data JSONed if everything is ok; 400, {} if the token is invalid, 408, {} if user has no games
+    :return: 200, game_data JSONed if everything is ok;
+    400, {} if the token is invalid;
+    408, {} if user has no games
     """
     username = token_auth(token)
     if username == -1:
@@ -219,6 +254,16 @@ def get_game_state(token, is_latex):
 
 @function_response
 def make_turn(token, op_ind, fun_indexes, is_latex):
+    """
+    Make one turn in the user's game
+    :param token: user's token
+    :param op_ind: index of the operator the user has chosen
+    :param fun_indexes: list of indexes the user has chosen
+    :param is_latex: boolean (0/1) whether the result should be in latex
+    :return: 200, {"Result Function": <fun>} if everything is ok and the turn is done
+    400, {} if the token if invalid or outdated
+    409, {} if it is not user's turn
+    """
     op_ind = int(op_ind)
     fun_indexes = list(map(int, fun_indexes))
     username = token_auth(token)
@@ -290,6 +335,11 @@ def login(username, password):
 
 @function_response
 def drop_tables(secret_code):
+    """
+    :param secret_code: admin secret from config
+    :return: 403, {} if the secret code is incorrect
+    299, {} if everything is dropped and recreated successfully
+    """
     if secret_code != Config.ADMIN_SECRET:
         return 403, json.dumps({})
     dbm.clear_all_tables()
