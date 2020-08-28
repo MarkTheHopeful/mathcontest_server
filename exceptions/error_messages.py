@@ -1,5 +1,6 @@
 CODE = {
     200: "Success",
+    201: "Already confirmed",
     299: "DROP TABLES SUCCEED",
 
     400: "The token is outdated",
@@ -13,6 +14,11 @@ CODE = {
     408: "You are not in any game",
     409: "Not your turn",
     410: "Unknown game error",
+    411: "The user is already in the queue",
+    412: "You are not in the queue",
+    413: "Not enough players in queue to create the game now",
+    414: "This game is already started",
+    415: "This game is not started",
 
     500: "Unknown server error",
     502: "Internal database error",

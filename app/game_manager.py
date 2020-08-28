@@ -7,17 +7,72 @@ from game.operators import ALL
 from utils.states import *
 from app.db_manager import DBManager
 from exceptions.GameExceptions import GameUserIsAlreadyInException, GameNoSuchPlayerException, \
-    GameIsNotStartedException, GameNotYourTurnException, GameUserHasNoGamesException
+    GameIsNotStartedException, GameNotYourTurnException, GameUserHasNoGamesException, \
+    GameUserIsAlreadyInQueueException, GameNotInQueueException, GameNotEnoughtPlayersException, \
+    GameIsAlreadyStartedException
 
 
 class GameManager:
     current_games = []
     ALARMING_AMOUNT_OF_GAMES = 1000
     users_to_games = dict()
+    waiting_queue = list()
     dbm = None
 
     def init_dbm(self, db_manager: DBManager):
         self.dbm = db_manager
+
+    def put_user_to_queue(self, username):
+        if username in self.users_to_games:
+            if self.users_to_games[username] == NOT_STARTED:
+                raise GameUserIsAlreadyInQueueException()
+            elif self.users_to_games[username] == ENDED_OK:
+                self.users_to_games[username] = NOT_STARTED
+            else:
+                raise GameUserIsAlreadyInException
+
+        self.waiting_queue.append(username)
+        self.users_to_games[username] = NOT_STARTED
+
+    def get_queue_len(self):
+        return len(self.waiting_queue)
+
+    def check_and_create_game(self, player_1):
+        if player_1 not in self.waiting_queue:
+            raise GameNotInQueueException()
+
+        if len(self.waiting_queue) < 2:
+            raise GameNotEnoughtPlayersException()
+
+        opponent = self.waiting_queue.pop(0)
+        if opponent == player_1:
+            opponent = self.waiting_queue.pop(0)
+        else:
+            self.waiting_queue.pop(self.waiting_queue.index(player_1))
+
+        player_1r = self.make_player(player_1)
+        player_2r = self.make_player(opponent)
+        game = Game(player_1r, player_2r, len(self.current_games))
+        self.current_games.append(game)
+        self.users_to_games[player_1] = game.game_id
+        self.users_to_games[opponent] = game.game_id
+        return self.get_game_information(player_1)
+
+    def confirm_game_start(self, username):
+        try:
+            ind = self.users_to_games[username]
+            if ind == NOT_STARTED:
+                raise KeyError()
+            game = self.current_games[ind]
+        except KeyError or IndexError:
+            raise GameUserHasNoGamesException()
+        if game.state != NOT_STARTED:
+            raise GameIsAlreadyStartedException()
+
+        _ = game.confirmed_by
+        print(game.confirmed_by)
+        game.confirm_start(username)
+        return _ != game.confirmed_by
 
     def start_game(self, player_1, player_2):
         player_1r = self.make_player(player_1)
@@ -47,7 +102,10 @@ class GameManager:
 
     def get_game_information(self, player_username):
         try:
-            game = self.current_games[self.users_to_games[player_username]]
+            ind = self.users_to_games[player_username]
+            if ind == NOT_STARTED:
+                raise KeyError()
+            game = self.current_games[ind]
         except KeyError:
             raise GameUserHasNoGamesException()
 
@@ -58,7 +116,10 @@ class GameManager:
 
     def make_turn(self, player_username, operator_index, functions, is_latex):
         try:
-            game = self.current_games[self.users_to_games[player_username]]
+            ind = self.users_to_games[player_username]
+            if ind == NOT_STARTED:
+                raise KeyError()
+            game = self.current_games[ind]
         except KeyError:
             raise GameNoSuchPlayerException()
 

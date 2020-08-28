@@ -40,7 +40,7 @@ def register():
     if code == 200 or code == 405:
         return try_again, state
     try:
-        return try_again, state + ":\n:: " + data["Error"]
+        return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
     except KeyError:
         return try_again, state + ":\n" + "Error information was not received"
 
@@ -57,7 +57,7 @@ def login():
         return try_again, state
 
     try:
-        return try_again, state + ":\n:: " + data["Error"]
+        return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
     except KeyError:
         return try_again, state + ":\n" + "Error information was not received"
 
@@ -67,7 +67,7 @@ def get_status():
     if code == 200:
         return state
     try:
-        return state + ":\n:: " + data["Error"]
+        return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
     except KeyError:
         return state + ":\n" + "Error information was not received"
 
@@ -79,7 +79,7 @@ def start_game_with(opponent_name):
     if code == 400 or code == 404 or code == 406 or code == 407:
         return state
     try:
-        return state + ":\n:: " + data["Error"]
+        return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
     except KeyError:
         return state + ":\n" + "Error information was not received"
 
@@ -91,7 +91,7 @@ def get_game_state():
     elif code == 400 or code == 408:
         return False, state
     try:
-        return False, state + ":\n:: " + data["Error"]
+        return False, state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
     except KeyError:
         return False, state + ":\n" + "Error information was not received"
 
@@ -114,13 +114,69 @@ def make_turn():
     code, state, data = send_request(f"/game/make_turn/{token}/{operator_ind}/0", j_payload={"fun_indexes": args})
     if code == 200:
         return f"{state}, result functions is {data['Result Function']}"
-    elif code == 400 or code == 409:
+    elif code == 400 or code == 409 or code == 415:
         return state
     else:
         try:
-            return state + ":\n:: " + data["Error"]
+            return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
         except KeyError:
             return state + ":\n" + "Error information was not received"
+
+
+def get_into_queue():
+    code, state, data = send_request(f"/put_user_in_queue/{token}")
+    if code == 200:
+        return "You are now in the queue. To check amount of users in the queue type 'queue length'.\n" \
+               " To try to create a game with somebody type 'try to create'"
+    if code == 400 or code == 406 or code == 411:
+        return state
+    else:
+        try:
+            return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
+        except KeyError:
+            return state + ":\n" + "Error information was not received"
+
+
+def get_queue_size():
+    code, state, data = send_request(f"/get_queue_len")
+    if code == 200:
+        return data["Length"]
+    else:
+        try:
+            return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
+        except KeyError:
+            return state + ":\n" + "Error information was not received"
+
+
+def check_if_game_found():
+    code, state, data = send_request(f"/check_and_create/{token}")
+    if code == 200:
+        return f"Game created with player {data['Opponent']}. To confirm type 'confirm game'"
+    elif code == 412:
+        return f"You are not in the queue. If you were, it means that somebody created a game with you. \n" \
+               f"To check it type 'game state'"
+    elif code == 400 or code == 413:
+        return state
+    else:
+        try:
+            return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
+        except KeyError:
+            return state + ":\n" + "Error information was not received"
+
+
+def confirm_game_start():
+    code, state, data = send_request(f"/confirm_game_start/{token}")
+    if code == 200:
+        return True, "Game start confirmed successfully"
+    elif code == 201:
+        return True, state
+    elif code == 400 or code == 408 or code == 414:
+        return False, state
+    else:
+        try:
+            return False, state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
+        except KeyError:
+            return False, state + ":\n" + "Error information was not received"
 
 
 def get_help_string():
@@ -128,6 +184,10 @@ def get_help_string():
 To see this help type: 'help'
 To check server's status type: 'status'
 To start game with somebody type: 'start_game_with <opponent's username>'
+To get in waiting game queue type: 'get in queue'
+To check the amount of users in the queue type: 'queue length'
+To try to create game with somebody type: 'try to create'
+To confirm that you are ready to start game type 'confirm game'
 To get state of your current game type: 'game state'
 To make turn type: 'make turn'
 To quit type: 'exit' or 'quit'"""
@@ -205,7 +265,7 @@ if __name__ == "__main__":
                 current_game_state = deserialize_game_state(info)
                 print(result)
             else:
-                print("The game started successfully, but by some reasons you can't get game information")
+                print("The game started successfully, but by some reasons you can't get game information")  # FIXME
                 print(info)
 
         elif query == "game state":
@@ -228,10 +288,27 @@ if __name__ == "__main__":
                 print("Encountered an error while trying to update your game state. Error:")
                 print(info)
                 continue
+            # noinspection PyRedeclaration
             current_game_state = deserialize_game_state(info)
             _ = input("Would you like to see new game state? (y/n)")
             if _ == "y":
                 print_game_state(current_game_state)
-
+        elif query == "get in queue":
+            print(get_into_queue())
+        elif query == "queue length":
+            print(get_queue_size())
+        elif query == "try to create":
+            print(check_if_game_found())
+        elif query == "confirm game":
+            is_ok, info = confirm_game_start()
+            print(info)
+            if is_ok:
+                is_ok, info = get_game_state()
+                if not is_ok:
+                    print("Encountered an error while trying to update your game state. Error:")
+                    print(info)
+                    continue
+                current_game_state = deserialize_game_state(info)
+                print_game_state(current_game_state)
         else:
             print("No such command")
