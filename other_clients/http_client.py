@@ -32,7 +32,7 @@ def send_request(request_line, j_payload=None):
 def register():
     username = input_normal("Input your new username:\n")
     password = input_normal("Input your new password:\n")
-    code, state, data = send_request(f"/register/{username}/{password}")
+    code, state, data = send_request(f"/api/v1/user/register/{username}/{password}")
     try_again = False
     if code == 200:
         return try_again, state
@@ -48,7 +48,7 @@ def register():
 def login():
     username = input_normal("Input your username:\n")
     password = input_normal("Input your password:\n")
-    code, state, data = send_request(f"/login/{username}/{password}")
+    code, state, data = send_request(f"/api/v1/user/login/{username}/{password}")
     try_again = False
     if code == 200:
         return try_again, data['Token']
@@ -63,20 +63,8 @@ def login():
 
 
 def get_status():
-    code, state, data = send_request("/status")
+    code, state, data = send_request("/api/v1/service/status")
     if code == 200:
-        return state
-    try:
-        return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
-    except KeyError:
-        return state + ":\n" + "Error information was not received"
-
-
-def start_game_with(opponent_name):
-    code, state, data = send_request(f"/start_game/{token}/{opponent_name}")
-    if code == 200:
-        return state + f"\n Game ID: {data['Game ID']}"
-    if code == 400 or code == 404 or code == 406 or code == 407:
         return state
     try:
         return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
@@ -85,7 +73,7 @@ def start_game_with(opponent_name):
 
 
 def get_game_state():
-    code, state, data = send_request(f"/game/get_state/{token}/0")
+    code, state, data = send_request(f"/api/v1/game/state/{token}/0")
     if code == 200:
         return True, data
     elif code == 400 or code == 408:
@@ -111,7 +99,7 @@ def make_turn():
                                      0 <= int(ind) < len(current_game_state.players_functions) + len(
                                          current_game_state.opponents_functions))))
 
-    code, state, data = send_request(f"/game/make_turn/{token}/{operator_ind}/0", j_payload={"fun_indexes": args})
+    code, state, data = send_request(f"/api/v1/game/turn/{token}/{operator_ind}/0", j_payload={"fun_indexes": args})
     if code == 200:
         return f"{state}, result functions is {data['Result Function']}"
     elif code == 400 or code == 409 or code == 415:
@@ -124,7 +112,7 @@ def make_turn():
 
 
 def get_into_queue():
-    code, state, data = send_request(f"/put_user_in_queue/{token}")
+    code, state, data = send_request(f"/api/v1/queue/put/{token}")
     if code == 200:
         return "You are now in the queue. To check amount of users in the queue type 'queue length'.\n" \
                " To try to create a game with somebody type 'try to create'"
@@ -138,7 +126,7 @@ def get_into_queue():
 
 
 def get_queue_size():
-    code, state, data = send_request(f"/get_queue_len")
+    code, state, data = send_request(f"/api/v1/queue/length")
     if code == 200:
         return data["Length"]
     else:
@@ -149,7 +137,7 @@ def get_queue_size():
 
 
 def check_if_game_found():
-    code, state, data = send_request(f"/check_and_create/{token}")
+    code, state, data = send_request(f"/api/v1/game/create/{token}")
     if code == 200:
         return f"Game created with player {data['Opponent']}. To confirm type 'confirm game'"
     elif code == 412:
@@ -165,7 +153,7 @@ def check_if_game_found():
 
 
 def confirm_game_start():
-    code, state, data = send_request(f"/confirm_game_start/{token}")
+    code, state, data = send_request(f"/api/v1/game/confirm/{token}")
     if code == 200:
         return True, "Game start confirmed successfully"
     elif code == 201:
@@ -183,7 +171,6 @@ def get_help_string():
     return """\
 To see this help type: 'help'
 To check server's status type: 'status'
-To start game with somebody type: 'start_game_with <opponent's username>'
 To get in waiting game queue type: 'get in queue'
 To check the amount of users in the queue type: 'queue length'
 To try to create game with somebody type: 'try to create'
@@ -253,21 +240,6 @@ if __name__ == "__main__":
         elif query == "status":
             result = get_status()
             print(result)
-        elif query.startswith("start_game_with"):
-            query = query.split()
-            if len(query) != 2:
-                print("Illegal amount of arguments. Required: 1, opponent username, given", len(query))
-                continue
-            opponent_username = query[1]
-            result = start_game_with(opponent_username)
-            is_ok, info = get_game_state()
-            if is_ok:
-                current_game_state = deserialize_game_state(info)
-                print(result)
-            else:
-                print("The game started successfully, but by some reasons you can't get game information")  # FIXME
-                print(info)
-
         elif query == "game state":
             is_ok, info = get_game_state()
             if is_ok:

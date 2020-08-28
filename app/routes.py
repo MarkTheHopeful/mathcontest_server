@@ -44,11 +44,6 @@ def confirm_game_start(token):
     return funs.confirm_game_start(token)
 
 
-@app.route('/api/v1/admin/drop/<secret_code>', methods=['GET'])
-def drop_table(secret_code):
-    return funs.drop_tables(secret_code)
-
-
 @app.route('/api/v1/game/state/<token>/<is_latex>', methods=['GET'])
 def game_get_state(token, is_latex):
     return funs.get_game_state(token, is_latex)
@@ -58,3 +53,8 @@ def game_get_state(token, is_latex):
 def game_make_turn(token, op_ind, is_latex):
     fun_inds = request.get_json()["fun_indexes"]
     return funs.make_turn(token, op_ind, fun_inds, is_latex)
+
+
+@app.route('/api/v1/admin/drop/<secret_code>', methods=['GET'])
+def drop_table(secret_code):
+    return funs.drop_tables(secret_code)
