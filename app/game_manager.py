@@ -54,11 +54,16 @@ class GameManager:
         player_2r = self.make_player(opponent)
         game = Game(player_1r, player_2r, len(self.current_games))
         self.current_games.append(game)
+        self.users_to_games[player_1] = game.game_id
+        self.users_to_games[opponent] = game.game_id
         return self.get_game_information(player_1)
 
     def confirm_game_start(self, username):
         try:
-            game = self.current_games[self.users_to_games[username]]
+            ind = self.users_to_games[username]
+            if ind == NOT_STARTED:
+                raise KeyError()
+            game = self.current_games[ind]
         except KeyError or IndexError:
             raise GameUserHasNoGamesException()
         if game.state != NOT_STARTED:
@@ -97,7 +102,10 @@ class GameManager:
 
     def get_game_information(self, player_username):
         try:
-            game = self.current_games[self.users_to_games[player_username]]
+            ind = self.users_to_games[player_username]
+            if ind == NOT_STARTED:
+                raise KeyError()
+            game = self.current_games[ind]
         except KeyError:
             raise GameUserHasNoGamesException()
 
@@ -108,7 +116,10 @@ class GameManager:
 
     def make_turn(self, player_username, operator_index, functions, is_latex):
         try:
-            game = self.current_games[self.users_to_games[player_username]]
+            ind = self.users_to_games[player_username]
+            if ind == NOT_STARTED:
+                raise KeyError()
+            game = self.current_games[ind]
         except KeyError:
             raise GameNoSuchPlayerException()
 

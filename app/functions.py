@@ -17,7 +17,7 @@ from exceptions.DBExceptions import DBException, DBUserAlreadyExistsException, D
 from exceptions.GameExceptions import GameException, GameUserIsAlreadyInException, GameUserHasNoGamesException, \
     GameNotYourTurnException, GameUserIsAlreadyInQueueException, GameNotInQueueException, \
     GameNotEnoughtPlayersException, GameIsAlreadyStartedException, GameIsNotStartedException, GameNoSuchPlayerException
-from utils import gen_token
+from utils import gen_token, full_stack
 from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 
 
@@ -55,14 +55,14 @@ def function_response(result_function):
             code, data = result_function(*args, **kwargs)
         except DBException as e:
             code = e.code
-            data = json.dumps({"Error": str(e)})
+            data = json.dumps({"Error": str(e), "Stack": full_stack()})
             print("DBException:", e)
         except GameException as e:
             code = 410
-            data = json.dumps({"Error": str(e)})
+            data = json.dumps({"Error": str(e), "Stack": full_stack()})
             print("GameException:", e)
         except Exception as e:
-            data = json.dumps({"Error": str(e)})
+            data = json.dumps({"Error": str(e), "Stack": full_stack()})
             print(e)
         return str(Response(code, data))
 
@@ -276,6 +276,8 @@ def make_turn(token, op_ind, fun_indexes, is_latex):
         return 200, json.dumps({"Result Function": lat_result})
     except GameNotYourTurnException as e:
         return 409, json.dumps({})
+    except GameIsNotStartedException:
+        return 415, json.dumps({})
     except GameException as e:
         print(e)
         raise e
