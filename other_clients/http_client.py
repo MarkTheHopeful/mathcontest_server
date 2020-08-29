@@ -29,6 +29,17 @@ def send_request(request_line, j_payload=None):
     return datum['code'], datum['state'], datum['data']
 
 
+def get_status():
+    code, state, data = send_request("/api/v1/service/status")
+    if code == 200:
+        return f"State: {data['State']}, Api version: {data['API version']}, DB manager: {data['DB manager']},\n " \
+               f"Game manager: {data['Game manager']}, Games: {data['Amount of games']}, Queue: {data['Queue length']}"
+    try:
+        return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
+    except KeyError:
+        return state + ":\n" + "Error information was not received"
+
+
 def register():
     username = input_normal("Input your new username:\n")
     password = input_normal("Input your new password:\n")
@@ -60,16 +71,6 @@ def login():
         return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
     except KeyError:
         return try_again, state + ":\n" + "Error information was not received"
-
-
-def get_status():
-    code, state, data = send_request("/api/v1/service/status")
-    if code == 200:
-        return state
-    try:
-        return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
-    except KeyError:
-        return state + ":\n" + "Error information was not received"
 
 
 def get_game_state():

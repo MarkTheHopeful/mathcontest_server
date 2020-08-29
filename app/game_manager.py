@@ -19,6 +19,10 @@ class GameManager:
     waiting_queue = list()
     dbm = None
 
+    def is_ok(self):
+        return self.dbm is not None and len(self.users_to_games) < self.ALARMING_AMOUNT_OF_GAMES, len(
+            self.current_games), len(self.waiting_queue)
+
     def init_dbm(self, db_manager: DBManager):
         self.dbm = db_manager
 

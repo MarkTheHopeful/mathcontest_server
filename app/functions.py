@@ -86,10 +86,16 @@ def token_auth(token):
 def status():  # TODO: rewrite to add meaningful information
     """
     Get the server's state
-    :return: 200, 'State' : 'OK', if is ok, Nothing otherwise
+    :return: 200, 'State' : 'Ok/Failed', 'API version', 'DB manager' : 'Ok/FAILED', 'Game manager': 'Ok/FAILED',
+     'Amount of games', 'Length of queue';
     """
     code = 200
-    data = json.dumps({'State': 'OK'})
+    result = {'State': 'Active', 'API version': 'v1', 'DB manager': 'Ok' if dbm.is_ok() else "FAILED"}
+    gm_state, games_amount, queue_len = gm.is_ok()
+    result["Game manager"] = "Ok" if gm_state else "FAILED"
+    result["Amount of games"] = games_amount
+    result["Queue length"] = queue_len
+    data = json.dumps(result)
     return code, data
 
 

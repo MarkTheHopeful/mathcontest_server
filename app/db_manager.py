@@ -28,6 +28,9 @@ class DBManager:
         self.db = db
         self.models = models
 
+    def is_ok(self):
+        return self.db is not None and self.models is not None
+
     @database_response
     def get_tokens_by_user_id(self, user_id):
         return self.models.Token.query.filter_by(user_id=user_id).all()
