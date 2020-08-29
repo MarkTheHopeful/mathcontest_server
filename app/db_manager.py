@@ -35,9 +35,9 @@ class DBManager:
     def get_tokens_by_user_id(self, user_id):
         return self.models.Token.query.filter_by(user_id=user_id).all()
 
-    @database_response
-    def get_user_id_by_username(self, username):
-        return self.get_user_by_username(username).id
+    # @database_response
+    # def get_user_id_by_username(self, username):
+    #     return self.get_user_by_username(username).id
 
     @database_response
     def get_username_and_exptime_by_token(self, token):
@@ -56,12 +56,12 @@ class DBManager:
             self.db.session.delete(tok)
             self.db.session.commit()
 
-    @database_response
-    def get_user_by_username(self, username):
-        u = self.models.User.query.filter_by(username=username).first()
-        if u is None:
-            raise DBUserNotFoundException()
-        return u
+    # @database_response
+    # def get_user_by_username(self, username):
+    #     u = self.models.User.query.filter_by(username=username).first()
+    #     if u is None:
+    #         raise DBUserNotFoundException()
+    #     return u
 
     @database_response
     def get_passhash_by_username(self, username):
@@ -81,7 +81,10 @@ class DBManager:
     def insert_user(self, username, pass_hash):
         new_user = self.models.User(username=username, password_hash=pass_hash,
                                     functions="",
-                                    operators="")
+                                    operators="",
+                                    bio="Hi! I am new here!",
+                                    history="",
+                                    rank="0")
         try:
             self.db.session.add(new_user)
             self.db.session.commit()
