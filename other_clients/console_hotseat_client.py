@@ -1,5 +1,5 @@
 import sympy as sp
-from entities.Player import Player
+from entities.player import Player
 from game.game import Game
 import game.operators as ops
 from utils.states import *

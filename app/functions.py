@@ -16,7 +16,7 @@ from exceptions.DBExceptions import DBException, DBUserAlreadyExistsException, D
     DBTokenNotFoundException
 from exceptions.GameExceptions import *
 from utils import gen_token, full_stack
-from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
+from entities.user import User
 
 
 class Response:
@@ -138,9 +138,7 @@ def register(username, password):
     """
     pass_hash = encrypt_password(password)
     try:
-        dbm.insert_user(username, pass_hash)
-        dbm.insert_functions_to_username(username, BASE_FUNCTIONS)  # TODO: make templates real
-        dbm.insert_operators_to_username(username, BASE_OPERATORS)
+        dbm.insert_user(User(username=username), pass_hash)
     except DBUserAlreadyExistsException:
         code = 405
         data = json.dumps({})

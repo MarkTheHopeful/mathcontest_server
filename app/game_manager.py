@@ -1,7 +1,7 @@
 from sympy import latex
 
 from game.game import Game
-from entities.Player import Player
+from entities.player import Player
 from game.game_state import GameState
 from game.operators import ALL
 from utils.states import *

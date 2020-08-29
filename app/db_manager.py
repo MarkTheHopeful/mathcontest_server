@@ -1,6 +1,7 @@
 from exceptions.DBExceptions import *
 from utils import convert_array_to_string, convert_string_to_array
 from sympy.parsing.sympy_parser import parse_expr
+import entities.user
 
 
 def database_response(database_fun):
@@ -78,18 +79,33 @@ class DBManager:
         self.db.session.commit()
 
     @database_response
-    def insert_user(self, username, pass_hash):
-        new_user = self.models.User(username=username, password_hash=pass_hash,
-                                    functions="",
-                                    operators="",
-                                    bio="Hi! I am new here!",
-                                    history="",
-                                    rank="0")
+    def insert_user(self, user_obj, pass_hash):
+        new_user = self.models.User(username=user_obj.username, password_hash=pass_hash,
+                                    functions=user_obj.functions,
+                                    operators=user_obj.operators,
+                                    bio=user_obj.bio,
+                                    history=user_obj.history,
+                                    rank=user_obj.rank)
         try:
             self.db.session.add(new_user)
             self.db.session.commit()
         except IntegrityError as e:
             raise DBUserAlreadyExistsException(message=e)
+
+    @database_response
+    def get_full_user_info(self, username):
+        u = self.models.User.query.filter_by(username=username).first()
+        if u is None:
+            raise DBUserNotFoundException()
+        return entities.user.User(dbu=u)
+
+    @database_response
+    def update_user_bio(self, username, new_bio):
+        u = self.models.User.query.filter_by(username=username).first()
+        if u is None:
+            raise DBUserNotFoundException()
+        u.bio = new_bio
+        self.db.session.commit()
 
     @database_response
     def clear_all_tables(self):
