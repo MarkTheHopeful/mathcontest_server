@@ -7,7 +7,7 @@ from game.game_state import deserialize_game_state
 
 host = os.environ.get("MATHCONTEST_SERVER") or "http://127.0.0.1:5000"
 current_game_state = None
-token = ""  # initialises later
+token = ""  # initializes later
 
 
 def input_normal(input_line, checker=lambda x: x):
@@ -99,7 +99,8 @@ def make_turn():
                                      0 <= int(ind) < len(current_game_state.players_functions) + len(
                                          current_game_state.opponents_functions))))
 
-    code, state, data = send_request(f"/api/v1/game/turn/{token}/{operator_ind}/0", j_payload={"fun_indexes": args})
+    code, state, data = send_request(f"/api/v1/game/turn/{token}/{operator_ind}/0",
+                                     j_payload={"indexes_function": args})
     if code == 200:
         return f"{state}, result functions is {data['Result Function']}"
     elif code == 400 or code == 409 or code == 415:

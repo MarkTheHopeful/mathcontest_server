@@ -14,9 +14,7 @@ from exceptions.error_messages import CODE
 from config import Config
 from exceptions.DBExceptions import DBException, DBUserAlreadyExistsException, DBUserNotFoundException, \
     DBTokenNotFoundException
-from exceptions.GameExceptions import GameException, GameUserIsAlreadyInException, GameUserHasNoGamesException, \
-    GameNotYourTurnException, GameUserIsAlreadyInQueueException, GameNotInQueueException, \
-    GameNotEnoughtPlayersException, GameIsAlreadyStartedException, GameIsNotStartedException, GameNoSuchPlayerException
+from exceptions.GameExceptions import *
 from utils import gen_token, full_stack
 from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
 
@@ -92,6 +90,58 @@ def status():  # TODO: rewrite to add meaningful information
     """
     code = 200
     data = json.dumps({'State': 'OK'})
+    return code, data
+
+
+@function_response
+def login(username, password):
+    """
+    :param username: not empty, should be real username
+    :param password: not empty, should be user's password
+    :return: 402, {} if there is no user with such credentials; 200, {'Token': <token>} if there is
+    Can throw DBException, but shouldn't
+    """
+    try:
+        u_hash = dbm.get_passhash_by_username(username)
+    except DBUserNotFoundException:
+        code = 402
+        data = json.dumps({})
+        return code, data
+
+    if not check_password(password, u_hash):
+        code = 402
+        data = json.dumps({})
+        return code, data
+
+    tok_uuid, tok_exp = gen_token()
+    dbm.insert_token_to_username(tok_uuid, tok_exp, username)
+    code = 200
+    data = json.dumps({'Token': tok_uuid})
+    return code, data
+
+
+@function_response
+def register(username, password):
+    """
+    :param username: new username, should be unique and consist only of allowed characters
+    TODO: add allowed characters list and verification
+    :param password: password, should be strong
+    TODO: add password check
+    :return: 200, {} if success; 405, {} if username is already in use
+    Can throw DBException, but shouldn't
+    """
+    pass_hash = encrypt_password(password)
+    try:
+        dbm.insert_user(username, pass_hash)
+        dbm.insert_functions_to_username(username, BASE_FUNCTIONS)  # TODO: make templates real
+        dbm.insert_operators_to_username(username, BASE_OPERATORS)
+    except DBUserAlreadyExistsException:
+        code = 405
+        data = json.dumps({})
+        return code, data
+    finally:
+        code = 200
+        data = json.dumps({})
     return code, data
 
 
@@ -188,45 +238,6 @@ def confirm_game_start(token):
 
 
 @function_response
-def start_game(token, username_other):
-    """
-    :param token: token of the invitor, used to get theirs username
-    :param username_other: username of the invited, should be real user's username
-    :return: 200, {"Game ID": <game_id>} if everything is ok and game created;
-    400, {} if the token is invalid or outdated;
-    404, {} if there is no user with "username_other"
-    406, {} if one of the users is already in game;
-    407, {} if invited user is the invitor itself
-    """
-    username_from = token_auth(token)
-    if username_from == -1:
-        code = 400
-        data = json.dumps({})
-        return code, data
-
-    if not dbm.is_user_exists(username_other):
-        code = 404
-        data = json.dumps({})
-        return code, data
-
-    if username_other == username_from:
-        code = 407
-        data = json.dumps({})
-        return code, data
-
-    try:
-        game_id = gm.start_game(username_from, username_other)
-    except GameUserIsAlreadyInException:
-        code = 406
-        data = json.dumps({})
-        return code, data
-
-    code = 200
-    data = json.dumps({"Game ID": str(game_id)})
-    return code, data
-
-
-@function_response
 def get_game_state(token, is_latex):
     """
     :param is_latex: '0' if should return non-latex functions, otherwise returns latex functions
@@ -274,65 +285,13 @@ def make_turn(token, op_ind, fun_indexes, is_latex):
     try:
         lat_result = gm.make_turn(username, op_ind, fun_indexes, is_latex)
         return 200, json.dumps({"Result Function": lat_result})
-    except GameNotYourTurnException as e:
+    except GameNotYourTurnException:
         return 409, json.dumps({})
     except GameIsNotStartedException:
         return 415, json.dumps({})
     except GameException as e:
         print(e)
         raise e
-
-
-@function_response
-def register(username, password):
-    """
-    :param username: new username, should be unique and consist only of allowed characters
-    TODO: add allowed characters list and verification
-    :param password: password, should be strong
-    TODO: add password check
-    :return: 200, {} if success; 405, {} if username is already in use
-    Can throw DBException, but shouldn't
-    """
-    pass_hash = encrypt_password(password)
-    try:
-        dbm.insert_user(username, pass_hash)
-        dbm.insert_functions_to_username(username, BASE_FUNCTIONS)  # TODO: make templates real
-        dbm.insert_operators_to_username(username, BASE_OPERATORS)
-    except DBUserAlreadyExistsException:
-        code = 405
-        data = json.dumps({})
-        return code, data
-    finally:
-        code = 200
-        data = json.dumps({})
-    return code, data
-
-
-@function_response
-def login(username, password):
-    """
-    :param username: not empty, should be real username
-    :param password: not empty, should be user's password
-    :return: 402, {} if there is no user with such credentials; 200, {'Token': <token>} if there is
-    Can throw DBException, but shouldn't
-    """
-    try:
-        u_hash = dbm.get_passhash_by_username(username)
-    except DBUserNotFoundException:
-        code = 402
-        data = json.dumps({})
-        return code, data
-
-    if not check_password(password, u_hash):
-        code = 402
-        data = json.dumps({})
-        return code, data
-
-    tok_uuid, tok_exp = gen_token()
-    dbm.insert_token_to_username(tok_uuid, tok_exp, username)
-    code = 200
-    data = json.dumps({'Token': tok_uuid})
-    return code, data
 
 
 @function_response
