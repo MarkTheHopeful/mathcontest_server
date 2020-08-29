@@ -24,6 +24,16 @@ def register(username, password):
     return functions.register(username, password)
 
 
+@app.route('/api/v1/user/<username>', methods=['GET'])
+def get_user(username):
+    return functions.get_user_information(username)
+
+
+@app.route('/api/v1/user/set_bio/<token>/<new_bio>', methods=['GET'])
+def set_bio(token, new_bio):
+    return functions.set_user_bio(token, new_bio)
+
+
 @app.route('/api/v1/queue/put/<token>', methods=['GET'])
 def put_user_in_queue(token):
     return functions.put_user_in_queue(token)

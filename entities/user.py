@@ -6,7 +6,7 @@ class User:
     def __init__(self, dbu=None, username="", functions=convert_array_to_string(BASE_FUNCTIONS),
                  operators=convert_array_to_string(BASE_OPERATORS),
                  bio="Hi! I am new here!", history="",
-                 rank=""):
+                 rank="0"):
         if dbu is None:
             self.username = username
             self.functions = functions

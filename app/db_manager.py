@@ -9,8 +9,8 @@ def database_response(database_fun):
         try:
             result = database_fun(*args, **kwargs)
         except DBException as e:
-            print("DB KNOWN::")
-            print(e)
+            # print("DB KNOWN::")
+            # print(e)
             raise e
         except Exception as e:
             print("DB UNKNOWN::")
@@ -93,11 +93,11 @@ class DBManager:
             raise DBUserAlreadyExistsException(message=e)
 
     @database_response
-    def get_full_user_info(self, username):
+    def get_base_user_info(self, username):
         u = self.models.User.query.filter_by(username=username).first()
         if u is None:
             raise DBUserNotFoundException()
-        return entities.user.User(dbu=u)
+        return entities.user.User(dbu=u).to_base_info_dict()
 
     @database_response
     def update_user_bio(self, username, new_bio):
