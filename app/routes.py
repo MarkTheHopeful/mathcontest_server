@@ -52,7 +52,7 @@ def game_get_state(token, is_latex):
 @app.route('/api/v1/game/turn/<token>/<operator_index>/<is_latex>', methods=['POST'])
 def game_make_turn(token, operator_index, is_latex):
     indexes_function = request.get_json()["indexes_function"]
-    return indexes_function.make_turn(token, operator_index, indexes_function, is_latex)
+    return functions.make_turn(token, operator_index, indexes_function, is_latex)
 
 
 @app.route('/api/v1/admin/drop/<secret_code>', methods=['GET'])

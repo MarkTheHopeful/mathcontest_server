@@ -9,7 +9,7 @@ from app.db_manager import DBManager
 from exceptions.GameExceptions import GameUserIsAlreadyInException, GameNoSuchPlayerException, \
     GameIsNotStartedException, GameNotYourTurnException, GameUserHasNoGamesException, \
     GameUserIsAlreadyInQueueException, GameNotInQueueException, GameNotEnoughtPlayersException, \
-    GameIsAlreadyStartedException
+    GameIsAlreadyStartedException, GameException
 
 
 class GameManager:
@@ -129,9 +129,9 @@ class GameManager:
         if game.current_player().name != player_username:
             raise GameNotYourTurnException()
 
-        position = functions[0]
-        game.apply_operator(operator_index, functions)
-        result = game.get_function(position)
+        result = game.apply_operator(operator_index, functions)[1]
+        if result is None:
+            raise GameException()
         if is_latex == "0":
             return str(result)
         return latex(result)

@@ -15,7 +15,6 @@ class Game:
         self.state = NOT_STARTED
 
     def confirm_start(self, username):
-
         if username == self.current_player().name:
             self.confirmed_by |= 1
         if username == self.current_opponent().name:
@@ -32,13 +31,14 @@ class Game:
     def get_function(self, position):
         player = self.current_player()
         if position >= len(player.functions):
-            player = self.current_opponent()
             position -= len(player.functions)
+            player = self.current_opponent()
         return player.functions[position]
 
     def apply_operator(self, op_ind, fun_inds):
         try:
             player = self.current_player()
+            print(player.name)
             oper = player.operators[op_ind]
             position = fun_inds[0]
             arguments = [self.get_function(ind) for ind in fun_inds]
@@ -48,9 +48,9 @@ class Game:
                 player = self.current_opponent()
             player.functions[position] = res_function
             self.turn_num += 1
-            return APPLY_SUCCESS
+            return APPLY_SUCCESS, res_function
         except Exception:  # TODO: This is very dumb
-            return APPLY_FAILED
+            return APPLY_FAILED, None
 
     def get_functions_by_username(self, username):
         if self.players[0].name == username:

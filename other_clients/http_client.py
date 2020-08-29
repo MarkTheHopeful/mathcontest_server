@@ -84,34 +84,6 @@ def get_game_state():
         return False, state + ":\n" + "Error information was not received"
 
 
-def make_turn():
-    print("Choose place to the new function! It will also be the first argument")
-    pos = int(input_normal("Enter correct position:\n",
-                           lambda ind:
-                           0 <= int(ind) < len(current_game_state.players_functions) + len(
-                               current_game_state.opponents_functions)))
-    operator_ind = int(input_normal("Enter the operator's index:\n",
-                                    lambda ind: 0 <= int(ind) <= len(current_game_state.players_operators)))
-    args = [pos]
-    while len(args) < current_game_state.players_operators_args[operator_ind]:
-        args.append(int(input_normal("Enter another argument's index:\n",
-                                     lambda ind:
-                                     0 <= int(ind) < len(current_game_state.players_functions) + len(
-                                         current_game_state.opponents_functions))))
-
-    code, state, data = send_request(f"/api/v1/game/turn/{token}/{operator_ind}/0",
-                                     j_payload={"indexes_function": args})
-    if code == 200:
-        return f"{state}, result functions is {data['Result Function']}"
-    elif code == 400 or code == 409 or code == 415:
-        return state
-    else:
-        try:
-            return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
-        except KeyError:
-            return state + ":\n" + "Error information was not received"
-
-
 def get_into_queue():
     code, state, data = send_request(f"/api/v1/queue/put/{token}")
     if code == 200:
@@ -166,6 +138,34 @@ def confirm_game_start():
             return False, state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
         except KeyError:
             return False, state + ":\n" + "Error information was not received"
+
+
+def make_turn():
+    print("Choose place to the new function! It will also be the first argument")
+    pos = int(input_normal("Enter correct position:\n",
+                           lambda ind:
+                           0 <= int(ind) < len(current_game_state.players_functions) + len(
+                               current_game_state.opponents_functions)))
+    operator_ind = int(input_normal("Enter the operator's index:\n",
+                                    lambda ind: 0 <= int(ind) <= len(current_game_state.players_operators)))
+    args = [pos]
+    while len(args) < current_game_state.players_operators_args[operator_ind]:
+        args.append(int(input_normal("Enter another argument's index:\n",
+                                     lambda ind:
+                                     0 <= int(ind) < len(current_game_state.players_functions) + len(
+                                         current_game_state.opponents_functions))))
+
+    code, state, data = send_request(f"/api/v1/game/turn/{token}/{operator_ind}/0",
+                                     j_payload={"indexes_function": args})
+    if code == 200:
+        return f"{state}, result functions is {data['Result Function']}"
+    elif code == 400 or code == 409 or code == 415:
+        return state
+    else:
+        try:
+            return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
+        except KeyError:
+            return state + ":\n" + "Error information was not received"
 
 
 def get_help_string():
