@@ -29,8 +29,9 @@ def get_user(username):
     return functions.get_user_information(username)
 
 
-@app.route('/api/v1/user/set_bio/<token>/<new_bio>', methods=['GET'])
-def set_bio(token, new_bio):
+@app.route('/api/v1/user/bio/<token>', methods=['POST'])
+def set_bio(token):
+    new_bio = request.get_json()["bio"]
     return functions.set_user_bio(token, new_bio)
 
 

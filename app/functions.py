@@ -154,7 +154,7 @@ def get_user_information(username):
     """
     Return base information for username
     :param username:
-    :return: 200, {username, bio, historym rank}; or 404, {} if no such user
+    :return: 200, {username, bio, history, rank}; or 404, {} if no such user
     """
     try:
         user_info_dict = dbm.get_base_user_info(username)
