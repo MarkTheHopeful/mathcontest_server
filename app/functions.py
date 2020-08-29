@@ -16,7 +16,7 @@ from exceptions.DBExceptions import DBException, DBUserAlreadyExistsException, D
     DBTokenNotFoundException
 from exceptions.GameExceptions import *
 from utils import gen_token, full_stack
-from game.constants import BASE_FUNCTIONS, BASE_OPERATORS
+from entities.user import User
 
 
 class Response:
@@ -130,17 +130,15 @@ def login(username, password):
 def register(username, password):
     """
     :param username: new username, should be unique and consist only of allowed characters
-    TODO: add allowed characters list and verification
     :param password: password, should be strong
-    TODO: add password check
     :return: 200, {} if success; 405, {} if username is already in use
     Can throw DBException, but shouldn't
+    TODO: add password check
+    TODO: add allowed characters list and verification
     """
     pass_hash = encrypt_password(password)
     try:
-        dbm.insert_user(username, pass_hash)
-        dbm.insert_functions_to_username(username, BASE_FUNCTIONS)  # TODO: make templates real
-        dbm.insert_operators_to_username(username, BASE_OPERATORS)
+        dbm.insert_user(User(username=username), pass_hash)
     except DBUserAlreadyExistsException:
         code = 405
         data = json.dumps({})
@@ -149,6 +147,37 @@ def register(username, password):
         code = 200
         data = json.dumps({})
     return code, data
+
+
+@function_response
+def get_user_information(username):
+    """
+    Return base information for username
+    :param username:
+    :return: 200, {username, bio, history, rank}; or 404, {} if no such user
+    """
+    try:
+        user_info_dict = dbm.get_base_user_info(username)
+        return 200, json.dumps(user_info_dict)
+    except DBUserNotFoundException:
+        return 404, json.dumps({})
+
+
+@function_response
+def set_user_bio(token, new_bio):
+    """
+    :param token: user's token
+    :param new_bio: user's new bio
+    :return: 200, {} is set ok, 400, {} if the token is invalid
+    """
+    username = token_auth(token)
+    if username == -1:
+        code = 400
+        data = json.dumps({})
+        return code, data
+
+    dbm.update_user_bio(username, new_bio)
+    return 200, json.dumps({})
 
 
 @function_response

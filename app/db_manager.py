@@ -1,6 +1,7 @@
 from exceptions.DBExceptions import *
 from utils import convert_array_to_string, convert_string_to_array
 from sympy.parsing.sympy_parser import parse_expr
+import entities.user
 
 
 def database_response(database_fun):
@@ -8,8 +9,8 @@ def database_response(database_fun):
         try:
             result = database_fun(*args, **kwargs)
         except DBException as e:
-            print("DB KNOWN::")
-            print(e)
+            # print("DB KNOWN::")
+            # print(e)
             raise e
         except Exception as e:
             print("DB UNKNOWN::")
@@ -35,9 +36,9 @@ class DBManager:
     def get_tokens_by_user_id(self, user_id):
         return self.models.Token.query.filter_by(user_id=user_id).all()
 
-    @database_response
-    def get_user_id_by_username(self, username):
-        return self.get_user_by_username(username).id
+    # @database_response
+    # def get_user_id_by_username(self, username):
+    #     return self.get_user_by_username(username).id
 
     @database_response
     def get_username_and_exptime_by_token(self, token):
@@ -56,12 +57,12 @@ class DBManager:
             self.db.session.delete(tok)
             self.db.session.commit()
 
-    @database_response
-    def get_user_by_username(self, username):
-        u = self.models.User.query.filter_by(username=username).first()
-        if u is None:
-            raise DBUserNotFoundException()
-        return u
+    # @database_response
+    # def get_user_by_username(self, username):
+    #     u = self.models.User.query.filter_by(username=username).first()
+    #     if u is None:
+    #         raise DBUserNotFoundException()
+    #     return u
 
     @database_response
     def get_passhash_by_username(self, username):
@@ -78,15 +79,33 @@ class DBManager:
         self.db.session.commit()
 
     @database_response
-    def insert_user(self, username, pass_hash):
-        new_user = self.models.User(username=username, password_hash=pass_hash,
-                                    functions="",
-                                    operators="")
+    def insert_user(self, user_obj, pass_hash):
+        new_user = self.models.User(username=user_obj.username, password_hash=pass_hash,
+                                    functions=user_obj.functions,
+                                    operators=user_obj.operators,
+                                    bio=user_obj.bio,
+                                    history=user_obj.history,
+                                    rank=user_obj.rank)
         try:
             self.db.session.add(new_user)
             self.db.session.commit()
         except IntegrityError as e:
             raise DBUserAlreadyExistsException(message=e)
+
+    @database_response
+    def get_base_user_info(self, username):
+        u = self.models.User.query.filter_by(username=username).first()
+        if u is None:
+            raise DBUserNotFoundException()
+        return entities.user.User(dbu=u).to_base_info_dict()
+
+    @database_response
+    def update_user_bio(self, username, new_bio):
+        u = self.models.User.query.filter_by(username=username).first()
+        if u is None:
+            raise DBUserNotFoundException()
+        u.bio = new_bio
+        self.db.session.commit()
 
     @database_response
     def clear_all_tables(self):

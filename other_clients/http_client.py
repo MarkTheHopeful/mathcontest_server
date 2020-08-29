@@ -68,9 +68,38 @@ def login():
         return try_again, state
 
     try:
-        return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
+        return try_again, state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
     except KeyError:
         return try_again, state + ":\n" + "Error information was not received"
+
+
+def get_user_info(username):
+    code, state, data = send_request(f"/api/v1/user/{username}")
+    if code == 200:
+        return f"User {data['username']}\n" \
+               f"Bio: {data['bio']}\n" \
+               f"Rank: {data['rank']}\n" \
+               f"Game history: {data['history']}\n"
+    elif code == 404:
+        return state
+    else:
+        try:
+            return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
+        except KeyError:
+            return state + ":\n" + "Error information was not received"
+
+
+def set_bio():
+    bio = input_normal("Input your new bio:\n")
+    code, state, data = send_request(f"/api/v1/user/bio/{token}", {"bio": bio})
+    if code == 200:
+        return state
+    if code == 400:
+        return state
+    try:
+        return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
+    except KeyError:
+        return state + ":\n" + "Error information was not received"
 
 
 def get_game_state():
@@ -173,6 +202,8 @@ def get_help_string():
     return """\
 To see this help type: 'help'
 To check server's status type: 'status'
+To check some user's information type: 'user <username>'
+To set your bio type: 'set bio'
 To get in waiting game queue type: 'get in queue'
 To check the amount of users in the queue type: 'queue length'
 To try to create game with somebody type: 'try to create'
@@ -242,6 +273,10 @@ if __name__ == "__main__":
         elif query == "status":
             result = get_status()
             print(result)
+        elif query.split()[0] == "user":
+            print(get_user_info(query.split()[1]))
+        elif query == "set bio":
+            print(set_bio())
         elif query == "game state":
             is_ok, info = get_game_state()
             if is_ok:
