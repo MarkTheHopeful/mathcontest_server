@@ -28,5 +28,6 @@ ADD = Operator((lambda f_1, f_2: f_1 + f_2), "+")
 UMN = Operator((lambda f_1: -f_1), "-")
 MUL = Operator((lambda f_1, f_2: f_1 * f_2), "*")
 DRX = Operator((lambda f_1: f_1.diff(symbols('x'))), "d/dx", "\\frac{d}{d x}")
+SUP = Operator((lambda f_1, f_2: f_1.subs({symbols('x'): f_2})), "sp()")
 
-ALL = [ADD, UMN, MUL, DRX]
+ALL = [ADD, UMN, MUL, DRX, SUP]

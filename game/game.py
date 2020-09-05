@@ -1,3 +1,4 @@
+from utils import full_stack
 from utils.states import *
 from exceptions.GameExceptions import GameNoSuchPlayerException
 
@@ -50,6 +51,7 @@ class Game:
             self.turn_num += 1
             return APPLY_SUCCESS, res_function
         except Exception:  # TODO: This is very dumb
+            print(full_stack())
             return APPLY_FAILED, None
 
     def get_functions_by_username(self, username):

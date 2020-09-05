@@ -13,7 +13,8 @@ if __name__ == "__main__":
     player_1 = Player(input("Enter the name of the first player:\n"), base_functions.copy(), ops.ALL)
     player_2 = Player(input("Enter the name of the second player:\n"), base_functions.copy(), ops.ALL)
 
-    main_game = Game(player_1, player_2, 0)
+    main_game = Game(player_1, player_2, -1)
+    main_game.state = STARTED
 
     while main_game.state == STARTED:
         player = main_game.current_player()
@@ -34,9 +35,9 @@ if __name__ == "__main__":
             args.append(new_pos)
         print(f"The operator is: {player.operators[op_ind]}")
         print(f"The arguments are:", *[main_game.get_function(pos) for pos in args], sep=", ")
-        apply_state = main_game.apply_operator(op_ind, args)
+        apply_state, result_function = main_game.apply_operator(op_ind, args)
         if apply_state == APPLY_SUCCESS:
-            print(f"The result is: {main_game.get_function(position)}")
+            print(f"The result is: {result_function}")
             main_game.turn_num += 1
         else:
             print("FATAL ERROR, idk why, please, try again, lol")
