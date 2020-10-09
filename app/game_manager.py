@@ -15,6 +15,7 @@ from exceptions.GameExceptions import GameUserIsAlreadyInException, GameNoSuchPl
 class GameManager:
     current_games = []
     ALARMING_AMOUNT_OF_GAMES = 1000
+    active_users_to_states = dict()
     users_to_games = dict()
     waiting_queue = list()
     dbm = None
