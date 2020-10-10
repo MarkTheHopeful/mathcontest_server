@@ -3,12 +3,13 @@ import json
 from sympy import latex
 
 from sympy.parsing.sympy_parser import parse_expr
-from utils.states import NOT_EXISTS
+from utils.states import GAME_NOT_CREATED
 from game.operators import make_smart_rep
+from utils.game_state import GameInnerState
 
 
 class GameState:
-    state = NOT_EXISTS
+    state = GAME_NOT_CREATED
 
     def __init__(self, state, turn_num=-1, player="", opponent="", players_functions=None, opponents_functions=None,
                  players_operators=None, opponents_operators=None, players_operators_args=None,
@@ -45,7 +46,7 @@ class GameState:
         oper_conv = make_smart_rep(latex_on)
         if latex_on:
             conv_fun = latex
-        return json.dumps({"GameState": self.state,
+        return json.dumps({"GameState": self.state.to_value(),
                            "Turn Number": self.turn_num,
                            "Player Name": self.player,
                            "Opponent Name": self.opponent,
@@ -58,7 +59,7 @@ class GameState:
 
 
 def deserialize_game_state(json_dict):  # NON LATEX STRICT
-    game_state = json_dict['GameState']
+    game_state = GameInnerState(int(json_dict['GameState']))
     turn_number = json_dict['Turn Number']
     player_name = json_dict['Player Name']
     opponent_name = json_dict["Opponent Name"]
