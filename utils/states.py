@@ -1,15 +1,14 @@
 from utils.user_state import UserState
+from utils.game_state import GameInnerState
 
 USER_PASSIVE = UserState(0)
-# TODO: add other states, look to utils.state_dict_constants.py
+USER_QUEUED = UserState(1)
+USER_ACCEPTING = UserState(2)
+USER_PLAYING = UserState(3)
+USER_ENDED = UserState(4)
 
-# Game states:          # FIXME: this is awful as it is. Should be replaced with some dict like thing
-ENDED_OK = -3
-NOT_EXISTS = -2
-NOT_STARTED = -1
-STARTED = 1
-ENDED = 2
-
-# Function execution results codes:
-APPLY_SUCCESS = 0
-APPLY_FAILED = -1
+GAME_NOT_CREATED = GameInnerState(0)
+GAME_ACCEPTING = GameInnerState(1)
+GAME_STARTED = GameInnerState(2)
+GAME_ENDED = GameInnerState(6)
+GAME_TO_DELETE = GameInnerState(7)

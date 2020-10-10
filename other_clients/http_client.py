@@ -142,17 +142,19 @@ def get_queue_size():
 def check_if_game_found():
     code, state, data = send_request(f"/api/v1/game/create/{token}")
     if code == 200:
-        return f"Game created with player {data['Opponent']}. To confirm type 'confirm game'"
+        return False, f"Game created with player {data['Opponent']}. To confirm type 'confirm game'"
     elif code == 412:
-        return f"You are not in the queue. If you were, it means that somebody created a game with you. \n" \
+        return False, f"You are not in the queue.\n" \
                f"To check it type 'game state'"
     elif code == 400 or code == 413:
-        return state
+        return False, state
+    elif code == 416 or code == 414:
+        return True, (state, data)
     else:
         try:
-            return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
+            return False, state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
         except KeyError:
-            return state + ":\n" + "Error information was not received"
+            return False, state + ":\n" + "Error information was not received"
 
 
 def confirm_game_start():
@@ -215,7 +217,7 @@ To quit type: 'exit' or 'quit'"""
 
 def print_game_state(game_state):
     print(f"You are {game_state.player}, your opponent is {game_state.opponent}")
-    print(f"The game state is {game_state.state}, the turn number is {game_state.turn_num}")
+    print(f"The game state is {game_state.state.get_description()}, the turn number is {game_state.turn_num}")
     print("Your functions:")
     print(*game_state.players_functions)
     print("Your opponent's functions:")
@@ -307,7 +309,15 @@ if __name__ == "__main__":
         elif query == "queue length":
             print(get_queue_size())
         elif query == "try to create":
-            print(check_if_game_found())
+            is_game_printed, payload = check_if_game_found()
+            if not is_game_printed:
+                print(payload)
+            else:
+                state, game_info = payload
+                print(state)
+                print("The state of your game:")
+                current_game_state = deserialize_game_state(game_info)
+                print_game_state(current_game_state)
         elif query == "confirm game":
             is_ok, info = confirm_game_start()
             print(info)

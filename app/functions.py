@@ -215,12 +215,15 @@ def get_queue_len():
 
 
 @function_response
-def check_and_create(token):
+def check_and_create(token, is_latex="0"):
     """
     Check if a game can be created with somebody in queue, and if possible, create it (The game.state is NOT_STARTED)
     :param token: the user's token
+    :param is_latex: if the game_info should be in latex
     :return: 200, {"Player": player.username, "Opponent": opponent.username} if game successfully created;
     400, {} if the token is invalid or outdated
+    416, game_info if the user is already in game and needed to accept it
+    414, game_info if the user is already in started game
     412, {} if the user is not in waiting queue
     413, {} if there is not enough players to create a game
     """
@@ -234,7 +237,15 @@ def check_and_create(token):
         game_info = gm.check_and_create_game(username)
     except GameNotInQueueException:
         return 412, json.dumps({})
-    except GameNotEnoughtPlayersException:
+    except GameWaitForAcceptException:
+        game_info = gm.get_game_information(username)
+        data = game_info.get_json(is_latex != "0")
+        return 416, data
+    except GameIsAlreadyStartedException:
+        game_info = gm.get_game_information(username)
+        data = game_info.get_json(is_latex != "0")
+        return 414, data
+    except GameNotEnoughPlayersException:
         return 413, json.dumps({})
 
     code = 200
@@ -265,7 +276,8 @@ def confirm_game_start(token):
         return 408, json.dumps({})
     except GameIsAlreadyStartedException:
         return 414, json.dumps({})
-
+    except GameIsAlreadyAcceptedException:
+        return 201, json.dumps({})      # FIXME: add different cases if the game is deleted or whatsoever
     if res:
         return 200, json.dumps({})
     else:

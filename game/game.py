@@ -6,14 +6,14 @@ from exceptions.GameExceptions import GameNoSuchPlayerException
 class Game:
     players = []
     turn_num = 0
-    state = NOT_STARTED
+    state = GAME_NOT_CREATED
     game_id = -1
     confirmed_by = 0
 
     def __init__(self, player_1, player_2, id):
         self.players = [player_1, player_2]
         self.game_id = id
-        self.state = NOT_STARTED
+        self.state = GAME_ACCEPTING
 
     def confirm_start(self, username):
         if username == self.current_player().name:
@@ -21,7 +21,7 @@ class Game:
         if username == self.current_opponent().name:
             self.confirmed_by |= 2
         if self.confirmed_by == 3:
-            self.state = STARTED
+            self.state = GAME_STARTED
 
     def current_player(self):
         return self.players[self.turn_num % len(self.players)]
@@ -49,10 +49,10 @@ class Game:
                 player = self.current_opponent()
             player.functions[position] = res_function
             self.turn_num += 1
-            return APPLY_SUCCESS, res_function
+            return res_function
         except Exception:  # TODO: This is very dumb
             print(full_stack())
-            return APPLY_FAILED, None
+            raise Exception("Function application failed")  # FIXME: And this is dumber
 
     def get_functions_by_username(self, username):
         if self.players[0].name == username:

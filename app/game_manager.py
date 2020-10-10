@@ -6,10 +6,7 @@ from game.game_state import GameState
 from game.operators import ALL
 from utils.states import *
 from app.db_manager import DBManager
-from exceptions.GameExceptions import GameUserIsAlreadyInException, GameNoSuchPlayerException, \
-    GameIsNotStartedException, GameNotYourTurnException, GameUserHasNoGamesException, \
-    GameUserIsAlreadyInQueueException, GameNotInQueueException, GameNotEnoughtPlayersException, \
-    GameIsAlreadyStartedException, GameException
+from exceptions.GameExceptions import *
 
 
 class GameManager:
@@ -27,29 +24,40 @@ class GameManager:
     def init_dbm(self, db_manager: DBManager):
         self.dbm = db_manager
 
-    def put_user_to_queue(self, username):
-        if username in self.users_to_games:
-            if self.users_to_games[username] == NOT_STARTED:
+    def put_user_to_queue(self, username):  # TODO: remove user from the queue
+        if username in self.active_users_to_states.keys():
+            if self.active_users_to_states[username] == USER_QUEUED:
                 raise GameUserIsAlreadyInQueueException()
-            elif self.users_to_games[username] == ENDED_OK:
-                self.users_to_games[username] = NOT_STARTED
+            elif self.active_users_to_states[username] == USER_ENDED:
+                del self.active_users_to_states[username]
             else:
                 raise GameUserIsAlreadyInException
 
         self.waiting_queue.append(username)
-        self.users_to_games[username] = NOT_STARTED
+        self.active_users_to_states[username] = USER_QUEUED
 
     def get_queue_len(self):
         return len(self.waiting_queue)
 
     def check_and_create_game(self, player_1):
-        if player_1 not in self.waiting_queue:
+        if player_1 not in self.active_users_to_states.keys():
+            raise GameNotInQueueException()
+
+        print(self.active_users_to_states[player_1].get_description())
+
+        if self.active_users_to_states[player_1] == USER_ACCEPTING:
+            raise GameWaitForAcceptException(self.users_to_games[player_1])
+
+        if self.active_users_to_states[player_1] == USER_PLAYING:
+            raise GameIsAlreadyStartedException(self.users_to_games[player_1])
+
+        if self.active_users_to_states[player_1] != USER_QUEUED:
             raise GameNotInQueueException()
 
         if len(self.waiting_queue) < 2:
-            raise GameNotEnoughtPlayersException()
+            raise GameNotEnoughPlayersException()
 
-        opponent = self.waiting_queue.pop(0)
+        opponent = self.waiting_queue.pop(0)  # FIXME: O(n)???
         if opponent == player_1:
             opponent = self.waiting_queue.pop(0)
         else:
@@ -61,22 +69,25 @@ class GameManager:
         self.current_games.append(game)
         self.users_to_games[player_1] = game.game_id
         self.users_to_games[opponent] = game.game_id
+        self.active_users_to_states[player_1] = USER_ACCEPTING
+        self.active_users_to_states[opponent] = USER_ACCEPTING
         return self.get_game_information(player_1)
 
     def confirm_game_start(self, username):
         try:
-            ind = self.users_to_games[username]
-            if ind == NOT_STARTED:
-                raise KeyError()
-            game = self.current_games[ind]
-        except KeyError or IndexError:
+            game_ind = self.users_to_games[username]
+            game = self.current_games[game_ind]
+        except KeyError:
             raise GameUserHasNoGamesException()
-        if game.state != NOT_STARTED:
-            raise GameIsAlreadyStartedException()
+
+        if game.state != GAME_ACCEPTING:
+            raise GameIsAlreadyAcceptedException()
 
         _ = game.confirmed_by
-        print(game.confirmed_by)
         game.confirm_start(username)
+        if game.state == GAME_STARTED:
+            self.active_users_to_states[username] = USER_PLAYING
+            self.active_users_to_states[game.get_opponent(username)] = USER_PLAYING
         return _ != game.confirmed_by
 
     def start_game(self, player_1, player_2):
@@ -90,7 +101,7 @@ class GameManager:
         self.users_to_games[player_1] = game.game_id
         self.users_to_games[player_2] = game.game_id
         self.current_games.append(game)
-        game.state = STARTED
+        game.state = GAME_STARTED
         return game.game_id
 
     def make_player(self, player_username):
@@ -108,8 +119,6 @@ class GameManager:
     def get_game_information(self, player_username):
         try:
             ind = self.users_to_games[player_username]
-            if ind == NOT_STARTED:
-                raise KeyError()
             game = self.current_games[ind]
         except KeyError:
             raise GameUserHasNoGamesException()
@@ -122,13 +131,11 @@ class GameManager:
     def make_turn(self, player_username, operator_index, functions, is_latex):
         try:
             ind = self.users_to_games[player_username]
-            if ind == NOT_STARTED:
-                raise KeyError()
             game = self.current_games[ind]
         except KeyError:
             raise GameNoSuchPlayerException()
 
-        if game.state != STARTED:
+        if game.state != GAME_STARTED:
             raise GameIsNotStartedException()
 
         if game.current_player().name != player_username:

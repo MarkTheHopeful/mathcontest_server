@@ -19,6 +19,7 @@ CODE = {
     413: "Not enough players in queue to create the game now",
     414: "This game is already started",
     415: "This game is not started",
+    416: "The user is accepting the game",
 
     500: "Unknown server error",
     502: "Internal database error",
