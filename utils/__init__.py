@@ -32,3 +32,14 @@ def full_stack():
     if exc is not None:
         stack_str += '  ' + traceback.format_exc().lstrip(trc)
     return stack_str
+
+
+def smart_split(s):
+    alternating = s.split('"')
+    result = []
+    for i in range(len(alternating)):
+        if i % 2 == 0:
+            result += alternating[i].split()
+        else:
+            result.append(alternating[i])
+    return result
