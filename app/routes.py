@@ -40,6 +40,11 @@ def put_user_in_queue(token):
     return functions.put_user_in_queue(token)
 
 
+@app.route('/api/v1/queue/del/<token>', methods=['GET'])
+def del_user_from_queue(token):
+    return functions.del_user_from_queue(token)
+
+
 @app.route('/api/v1/queue/length', methods=['GET'])
 def get_queue_len():
     return functions.get_queue_len()

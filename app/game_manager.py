@@ -36,6 +36,13 @@ class GameManager:
         self.waiting_queue.append(username)
         self.active_users_to_states[username] = USER_QUEUED
 
+    def del_user_from_queue(self, username):
+        if username in self.active_users_to_states.keys():
+            if self.active_users_to_states[username] == USER_QUEUED:
+                del self.active_users_to_states[username]
+                self.waiting_queue.pop(self.waiting_queue.index(username))      # FIXME: Too slow!
+        raise GameNotInQueueException()
+
     def get_queue_len(self):
         return len(self.waiting_queue)
 

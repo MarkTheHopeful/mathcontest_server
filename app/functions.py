@@ -206,6 +206,28 @@ def put_user_in_queue(token):
 
 
 @function_response
+def del_user_from_queue(token):
+    """
+    Remove the user with the token from the waiting queue
+    :param token: the user's token, string
+    :return: 200, {} if success;
+    400, {} if the token is invalid or outdated;
+    412, {} if the user is not in queue
+    """
+
+    username = token_auth(token)
+    if username == -1:
+        code = 400
+        data = json.dumps({})
+        return code, data
+    try:
+        gm.del_user_from_queue(username)
+    except GameNotInQueueException:
+        return 412, json.dumps({})
+    return 200, json.dumps({})
+
+
+@function_response
 def get_queue_len():
     """
     Get the waiting queue length
@@ -277,7 +299,7 @@ def confirm_game_start(token):
     except GameIsAlreadyStartedException:
         return 414, json.dumps({})
     except GameIsAlreadyAcceptedException:
-        return 201, json.dumps({})      # FIXME: add different cases if the game is deleted or whatsoever
+        return 201, json.dumps({})  # FIXME: add different cases if the game is deleted or whatsoever
     if res:
         return 200, json.dumps({})
     else:

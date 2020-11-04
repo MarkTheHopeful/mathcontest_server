@@ -128,6 +128,19 @@ def get_into_queue():
             return state + ":\n" + "Error information was not received"
 
 
+def del_from_queue():
+    code, state, data = send_request(f"/api/v1/queue/del/{token}")
+    if code == 200:
+        return "You are now removed from the queue"
+    if code == 400 or code == 412:
+        return state
+    else:
+        try:
+            return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
+        except KeyError:
+            return state + ":\n" + "Error information was not received"
+
+
 def get_queue_size():
     code, state, data = send_request(f"/api/v1/queue/length")
     if code == 200:
@@ -145,7 +158,7 @@ def check_if_game_found():
         return False, f"Game created with player {data['Opponent']}. To confirm type 'confirm game'"
     elif code == 412:
         return False, f"You are not in the queue.\n" \
-               f"To check it type 'game state'"
+                      f"To check it type 'game state'"
     elif code == 400 or code == 413:
         return False, state
     elif code == 416 or code == 414:
@@ -207,6 +220,7 @@ To check server's status type: 'status'
 To check some user's information type: 'user <username>'
 To set your bio type: 'set bio'
 To get in waiting game queue type: 'get in queue'
+To get out of waiting queue type: 'del from queue'
 To check the amount of users in the queue type: 'queue length'
 To try to create game with somebody type: 'try to create'
 To confirm that you are ready to start game type 'confirm game'
@@ -306,6 +320,8 @@ if __name__ == "__main__":
                 print_game_state(current_game_state)
         elif query == "get in queue":
             print(get_into_queue())
+        elif query == "del from queue":
+            print(del_from_queue())
         elif query == "queue length":
             print(get_queue_size())
         elif query == "try to create":
