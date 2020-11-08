@@ -1,5 +1,5 @@
 from other_clients.Engine import Engine, get_error_message
-from other_clients.ServerState import ServerState
+from other_clients.DataClasses import ServerState, UserInfo
 from utils import smart_split, full_stack
 import validators
 
@@ -7,7 +7,23 @@ CODE_EXIT = -1
 CODE_PROCEED = 0
 
 engine = None
-token = "Missed"
+
+
+class Current:
+    def __init__(self, token):
+        self.token = token
+
+    def set_token(self, token):
+        self.token = token
+
+    def get_token(self):
+        return self.token
+
+    def __str__(self):
+        return self.token
+
+
+current = Current("Missed")
 
 
 class ExitException(Exception):
@@ -51,8 +67,7 @@ def get_host_status():
 def login(log, pas):
     code, state, data = engine.send_request(f"/api/v1/user/login/{log}/{pas}")
     if code == 200:
-        global token
-        token = data["Token"]
+        current.set_token(data["Token"])
         return data["Token"]
     if code == 402:
         return state
@@ -62,6 +77,25 @@ def login(log, pas):
 def register(log, pas):
     code, state, data = engine.send_request(f"/api/v1/user/register/{log}/{pas}")
     if code == 200 or code == 405:
+        return state
+    return get_error_message(state, data)
+
+
+def get_user(username):
+    code, state, data = engine.send_request(f"/api/v1/user/{username}")
+    if code == 200:
+        user_info = UserInfo(data)
+        return str(user_info)
+    if code == 404:
+        return state
+    return get_error_message(state, data)
+
+
+def set_bio(bio, tok=current):
+    if tok is Current:
+        tok = current.get_token()
+    code, state, data = engine.send_request(f"/api/v1/user/bio/{tok}", {"bio": bio})
+    if code == 200 or code == 400:
         return state
     return get_error_message(state, data)
 
@@ -76,6 +110,8 @@ set_host <url>: set new host URL
 get_host_status: get the host's status
 login <log> <pas>: login
 register <log> <pas>: register
+get_user <username>: get user information
+set_bio <bio> [token]: set bio for user with token, if given (else last login token will be used)
 """
 
 
@@ -84,16 +120,15 @@ NAMES_TO_FUNCTIONS = {"test_host": test_host,
                       "get_host_status": get_host_status,
                       "login": login,
                       "register": register,
+                      "get_user": get_user,
+                      "set_bio": set_bio,
                       "exit": exit_loop,
                       "help": get_help}
 
 
 def process_command(command_line):
-    command, *arguments = smart_split(command_line)
-    if command not in NAMES_TO_FUNCTIONS.keys():
-        print("No such command")
-        return CODE_PROCEED
     try:
+        command, *arguments = smart_split(command_line)
         print(NAMES_TO_FUNCTIONS[command](*arguments))
     except ExitException as e:
         if e.payload != "":
@@ -101,6 +136,11 @@ def process_command(command_line):
         if str(e) != "":
             print(e)
         return CODE_EXIT
+    except KeyError:
+        print("No such command")
+        return CODE_PROCEED
+    except ValueError as e:
+        print(e)
     except TypeError as e:
         print(e)
     except Exception as e:

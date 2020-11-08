@@ -44,6 +44,8 @@ def smart_split(s, force_nonempty=True, empty_replacer="\u2060"):
             result.append(alternating[i])
     if force_nonempty:
         for i in range(len(result)):
+            if "/" in result[i]:
+                raise ValueError("Don't use / character in commands")
             if not result[i]:
                 result[i] = empty_replacer
     return result
