@@ -7,7 +7,7 @@ CODE_EXIT = -1
 CODE_PROCEED = 0
 
 engine = None
-token = ""
+token = "Missed"
 
 
 class ExitException(Exception):
@@ -48,19 +48,42 @@ def get_host_status():
     return get_error_message(state, data)
 
 
+def login(log, pas):
+    code, state, data = engine.send_request(f"/api/v1/user/login/{log}/{pas}")
+    if code == 200:
+        global token
+        token = data["Token"]
+        return data["Token"]
+    if code == 402:
+        return state
+    return get_error_message(state, data)
+
+
+def register(log, pas):
+    code, state, data = engine.send_request(f"/api/v1/user/register/{log}/{pas}")
+    if code == 200 or code == 405:
+        return state
+    return get_error_message(state, data)
+
+
 def get_help():
     return """\
 List of available commands:
 help: print this help
 exit: exit client
 test_host: test availability of the host
-set_host: set new host URL
+set_host <url>: set new host URL
+get_host_status: get the host's status
+login <log> <pas>: login
+register <log> <pas>: register
 """
 
 
 NAMES_TO_FUNCTIONS = {"test_host": test_host,
                       "set_host": set_host,
                       "get_host_status": get_host_status,
+                      "login": login,
+                      "register": register,
                       "exit": exit_loop,
                       "help": get_help}
 

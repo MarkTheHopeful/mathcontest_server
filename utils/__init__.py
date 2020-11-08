@@ -34,7 +34,7 @@ def full_stack():
     return stack_str
 
 
-def smart_split(s):
+def smart_split(s, force_nonempty=True, empty_replacer="\u2060"):
     alternating = s.split('"')
     result = []
     for i in range(len(alternating)):
@@ -42,4 +42,8 @@ def smart_split(s):
             result += alternating[i].split()
         else:
             result.append(alternating[i])
+    if force_nonempty:
+        for i in range(len(result)):
+            if not result[i]:
+                result[i] = empty_replacer
     return result
