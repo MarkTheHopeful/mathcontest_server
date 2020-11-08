@@ -100,6 +100,24 @@ def set_bio(bio, tok=current):
     return get_error_message(state, data)
 
 
+def push_queue(tok=current):
+    if tok is Current:
+        tok = current.get_token()
+    code, state, data = engine.send_request(f"/api/v1/queue/put/{tok}")
+    if code == 200 or code == 400 or code == 406 or code == 411:
+        return state
+    return get_error_message(state, data)
+
+
+def pop_queue(tok=current):
+    if tok is Current:
+        tok = current.get_token()
+    code, state, data = engine.send_request(f"/api/v1/queue/del/{tok}")
+    if code == 200 or code == 400 or code == 412:
+        return state
+    return get_error_message(state, data)
+
+
 def get_help():
     return """\
 List of available commands:
@@ -112,6 +130,8 @@ login <log> <pas>: login
 register <log> <pas>: register
 get_user <username>: get user information
 set_bio <bio> [token]: set bio for user with token, if given (else last login token will be used)
+push_queue [token]: get into queue
+pop_queue [token]: get from queue
 """
 
 
@@ -122,6 +142,8 @@ NAMES_TO_FUNCTIONS = {"test_host": test_host,
                       "register": register,
                       "get_user": get_user,
                       "set_bio": set_bio,
+                      "push_queue": push_queue,
+                      "pop_queue": pop_queue,
                       "exit": exit_loop,
                       "help": get_help}
 
