@@ -2,6 +2,13 @@ import requests, json
 from game.game_state import deserialize_game_state
 
 
+def get_error_message(state, data):
+    try:
+        return state + ":\n:: " + data["Error"] + "\n" + data["Stack"]
+    except KeyError:
+        return state + ":\n" + "Error information was not received"
+
+
 class Engine:
     host = ""
     SERVER_REACHABLE = 1

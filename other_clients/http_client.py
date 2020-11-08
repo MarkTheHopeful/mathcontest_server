@@ -242,10 +242,6 @@ def print_game_state(game_state):
     print(*game_state.opponents_operators)
 
 
-def process_command(command_line):
-    pass
-
-
 # TODO: catch the "server is offline" situation
 if __name__ == "__main__":
     # print(os.environ.get('PYTHONPATH'))
